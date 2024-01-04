@@ -11,6 +11,7 @@ import java.util.List;
 
 public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin {
     private static final String TAG = "ParseConsentString";
+    // Name string for purpose cases
     private final String[] purposeTitles =
             new String[]{"Misc: Google vendor consent",
                     "Purpose 1 - Store and/or access information on a device",
@@ -36,6 +37,10 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
         return "EUConsentStringParser";
     }
 
+    /**
+     * The original methods from https://itnext.io/android-admob-consent-with-ump-personalized-or-non-personalized-ads-in-eea-3592e192ec90
+     * adapted to be used as a Godot Android plugin
+     */
     private boolean hasAttribute(String input, int index) {
         if (input == null) return false;
         return input.length() >= index && input.charAt(index-1) == '1';
@@ -51,6 +56,11 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
         return hasVendorConsent;
     }
 
+    /**
+     * These methods will always assume that Google  has consent and legitimate interest set, in the vendor list
+     * since it's part of the minimum requirements for showing ads. Great for simple yes/no checks
+     */
+
     private boolean hasConsentOrLegitimateInterestFor(List<Integer> indexes, String purposeConsent, String purposeLI, boolean hasVendorConsent, boolean hasVendorLI){
         for (Integer p: indexes) {
             boolean purposeAndVendorLI = hasAttribute(purposeLI, p) && hasVendorLI;
@@ -64,13 +74,6 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
         return true;
     }
 
-    private boolean hasConsentForSinglePurpose(int index, String purposeConsent){
-        return hasAttribute(purposeConsent, index);
-    }
-
-    private boolean hasLIForSinglePurpose(int index, String purposeLI){
-        return hasAttribute(purposeLI, index);
-    }
 
     @UsedByGodot
     public boolean canShowAds(){
@@ -97,7 +100,6 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
                 && hasConsentOrLegitimateInterestFor(indexesLI, purposeConsent, purposeLI, hasGoogleVendorConsent, hasGoogleVendorLI);
 
     }
-
 
     @UsedByGodot
     public boolean canShowPersonalizedAds(){
@@ -127,6 +129,29 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
 
     }
 
+
+    /**
+     * New additions for obtaining raw consent info for all 10 main purposes
+     * Google vendor consent + LI checks were removed to always return the correct status, even if
+     * vendor consent or LI are false
+     */
+
+    private boolean hasConsentForSinglePurpose(int index, String purposeConsent){
+        return hasAttribute(purposeConsent, index);
+    }
+
+    private boolean hasLIForSinglePurpose(int index, String purposeLI){
+        return hasAttribute(purposeLI, index);
+    }
+
+    /**
+     * Creates a Godot compatible dictionary from all purposes, with the addition of the Google vendor flags
+     * Legitimate interest is not applicable for purposes 1, 3 and 4
+     *
+     * @return org.godotengine.godot.Dictionary, where the key is the purpose's index, followed by a
+     * simple Object array of the Purposes full name, consent status (boolean), and LI status (boolean where applicable)
+     * The last entries are for informational purposes
+     */
     @UsedByGodot
     public org.godotengine.godot.Dictionary getRawConsentStatusForAllPurposes(){
 
@@ -165,6 +190,18 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
 
     }
 
+    /**
+     * Creates and returns a Godot compatible dictionary with a single entry for a single purpose, by index, where index is 1-10
+     * Additionally, the Google vendor purpose statuses can be requested with a value of 0.
+     * If the index is out of range, the dictionary will contain an error message
+     *
+     * Legitimate interest is not applicable for purposes 1, 3 and 4
+     *
+     * (The reson for using Dictionary is that the Godot Android plugin system supports very limited return datatypes
+     * @param index The numerical index of the Purpose, 1-10, or 0 for Google vendor status
+     * @return org.godotengine.godot.Dictionary with one key, where the key is the purpose's index, followed by a
+     * simple Object array of the Purposes full name, consent status (boolean), and LI status (boolean where applicable)
+     */
     @UsedByGodot
     public org.godotengine.godot.Dictionary getRawConsentStatusForSinglePurpose(int index) {
         SharedPreferences prefs = context.getSharedPreferences(context.getPackageName() + "_preferences", Context.MODE_PRIVATE);
