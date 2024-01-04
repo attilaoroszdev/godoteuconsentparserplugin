@@ -26,7 +26,10 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
                     "Purpose 10 - Develop and improve products"
             };
 
+//    Works in plugin v1, not in v2
     private Context context = this.getGodot().getContext();
+//    In case you want to export it for v2 (Godot 4.2)
+//    private Context context = this.getActivity();
     public ParseConsentString(Godot godot) {
         super(godot);
     }
@@ -197,7 +200,7 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
      *
      * Legitimate interest is not applicable for purposes 1, 3 and 4
      *
-     * (The reson for using Dictionary is that the Godot Android plugin system supports very limited return datatypes
+     * (The reason for using Dictionary is that the Godot Android plugin system supports very limited return datatypes
      * @param index The numerical index of the Purpose, 1-10, or 0 for Google vendor status
      * @return org.godotengine.godot.Dictionary with one key, where the key is the purpose's index, followed by a
      * simple Object array of the Purposes full name, consent status (boolean), and LI status (boolean where applicable)
