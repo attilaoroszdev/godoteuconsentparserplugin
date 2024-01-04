@@ -11,20 +11,8 @@ import java.util.List;
 
 public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin {
     private static final String TAG = "ParseConsentString";
-    // Name string for purpose cases
-    private final String[] purposeTitles =
-            new String[]{"Misc: Google vendor consent",
-                    "Purpose 1 - Store and/or access information on a device",
-                    "Purpose 2 - Select basic ads",
-                    "Purpose 3 - Create a personalised ads profile",
-                    "Purpose 4 - Select personalised ads",
-                    "Purpose 5 - Create a personalised content profile",
-                    "Purpose 6 - Select personalised content",
-                    "Purpose 7 - Measure ad performance",
-                    "Purpose 8 - Measure content performance",
-                    "Purpose 9 - Apply market research to generate audience insights",
-                    "Purpose 10 - Develop and improve products"
-            };
+    private List<Integer> deniedPurposes = new ArrayList<>();
+    private List<Integer> deniedFlexiblePurposes = new ArrayList<>();
 
 //    Works in plugin v1, not in v2
     private Context context = this.getGodot().getContext();
@@ -52,10 +40,12 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
     private boolean hasConsentFor(List<Integer> indexes, String purposeConsent, boolean hasVendorConsent) {
         for (Integer p: indexes) {
             if (!hasAttribute(purposeConsent, p)) {
+                deniedPurposes.add(p);
                 Log.e(TAG, "hasConsentFor: denied for purpose #" + p );
-                return false;
+
             }
         }
+        if (deniedPurposes.size() > 0) return false;
         return hasVendorConsent;
     }
 
@@ -65,21 +55,34 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
      */
 
     private boolean hasConsentOrLegitimateInterestFor(List<Integer> indexes, String purposeConsent, String purposeLI, boolean hasVendorConsent, boolean hasVendorLI){
-        for (Integer p: indexes) {
-            boolean purposeAndVendorLI = hasAttribute(purposeLI, p) && hasVendorLI;
-            boolean purposeConsentAndVendorConsent = hasAttribute(purposeConsent, p) && hasVendorConsent;
-            boolean isOk = purposeAndVendorLI || purposeConsentAndVendorConsent;
-            if (!isOk){
-                Log.e(TAG, "hasConsentOrLegitimateInterestFor: denied for #" + p);
-                return false;
+        boolean isOK = true;
+        for (Integer n: indexes) {
+
+            boolean hasPurposeLI = hasAttribute(purposeLI, n);
+            boolean hasPurposeConsent = hasAttribute(purposeConsent, n);
+            boolean purposeAndVendorLI = hasPurposeLI && hasVendorLI;
+            boolean purposeConsentAndVendorConsent = hasPurposeConsent && hasVendorConsent;
+
+            if (!(hasPurposeConsent || hasPurposeLI)){
+                Log.e(TAG, "Added to deniedFlexibles: #" + n);
+                deniedFlexiblePurposes.add(n);
             }
+
+            if (!(purposeAndVendorLI || purposeConsentAndVendorConsent)) {
+                isOK = false;
+                Log.e(TAG, "hasConsentOrLegitimateInterestFor: denied for #" + n);
+            }
+
         }
-        return true;
+
+        return isOK;
     }
 
 
     @UsedByGodot
     public boolean canShowAds(){
+        deniedPurposes.clear();
+        deniedFlexiblePurposes.clear();
         SharedPreferences prefs = context.getSharedPreferences(context.getPackageName() + "_preferences", Context.MODE_PRIVATE);
         String purposeConsent = prefs.getString("IABTCF_PurposeConsents", "");
         String vendorConsent = prefs.getString("IABTCF_VendorConsents","");
@@ -99,13 +102,18 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
         indexesLI.add(9);
         indexesLI.add(10);
 
-        return hasConsentFor(indexes, purposeConsent, hasGoogleVendorConsent)
-                && hasConsentOrLegitimateInterestFor(indexesLI, purposeConsent, purposeLI, hasGoogleVendorConsent, hasGoogleVendorLI);
+        boolean consentOK = hasConsentFor(indexes, purposeConsent, hasGoogleVendorConsent);
+        boolean legitimateInterestOK = hasConsentOrLegitimateInterestFor(indexesLI, purposeConsent, purposeLI, hasGoogleVendorConsent, hasGoogleVendorLI);
+
+        return consentOK && legitimateInterestOK;
+
 
     }
 
     @UsedByGodot
     public boolean canShowPersonalizedAds(){
+        deniedPurposes.clear();
+        deniedFlexiblePurposes.clear();
         SharedPreferences prefs = context.getSharedPreferences(context.getPackageName() + "_preferences", Context.MODE_PRIVATE);
         String purposeConsent = prefs.getString("IABTCF_PurposeConsents", "");
         String vendorConsent = prefs.getString("IABTCF_VendorConsents","");
@@ -127,8 +135,10 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
         indexesLI.add(9);
         indexesLI.add(10);
 
-        return hasConsentFor(indexes, purposeConsent, hasGoogleVendorConsent)
-                && hasConsentOrLegitimateInterestFor(indexesLI, purposeConsent, purposeLI, hasGoogleVendorConsent, hasGoogleVendorLI);
+        boolean consentOK = hasConsentFor(indexes, purposeConsent, hasGoogleVendorConsent);
+        boolean legitimateInterestOK = hasConsentOrLegitimateInterestFor(indexesLI, purposeConsent, purposeLI, hasGoogleVendorConsent, hasGoogleVendorLI);
+
+        return consentOK && legitimateInterestOK;
 
     }
 
@@ -139,21 +149,31 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
      * vendor consent or LI are false
      */
 
-    private boolean hasConsentForSinglePurpose(int index, String purposeConsent){
-        return hasAttribute(purposeConsent, index);
+    private int hasConsentForSinglePurpose(int index, String purposeConsent){
+        return hasAttribute(purposeConsent, index) ? 1 : 0;
+
     }
 
-    private boolean hasLIForSinglePurpose(int index, String purposeLI){
-        return hasAttribute(purposeLI, index);
+    private int hasLIForSinglePurpose(int index, String purposeLI){
+        return hasAttribute(purposeLI, index) ? 1 : 0;
     }
 
     /**
-     * Creates a Godot compatible dictionary from all purposes, with the addition of the Google vendor flags
-     * Legitimate interest is not applicable for purposes 1, 3 and 4
-     *
-     * @return org.godotengine.godot.Dictionary, where the key is the purpose's index, followed by a
-     * simple Object array of the Purposes full name, consent status (boolean), and LI status (boolean where applicable)
-     * The last entries are for informational purposes
+     * ToDo
+     * Can't do stream().mapToInt on the List, because minSDK < 24
+     * @param list
+     * @return
+     */
+    private int[] listToIntArray(List<Integer> list){
+        int[] result = new int[list.size()];
+        for (int i = 0; i < result.length; i++){
+            result[i] = list.get(i);
+        }
+        return result;
+    }
+
+    /**
+     * ToDo
      */
     @UsedByGodot
     public org.godotengine.godot.Dictionary getRawConsentStatusForAllPurposes(){
@@ -165,28 +185,61 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
         String purposeLI = prefs.getString("IABTCF_PurposeLegitimateInterests","");
 
         int googleId = 755;
-        boolean hasGoogleVendorConsent = hasAttribute(vendorConsent, googleId);
-        boolean hasGoogleVendorLI = hasAttribute(vendorLI, googleId);
+        int hasGoogleVendorConsent = hasAttribute(vendorConsent, googleId) ? 1 : 0;
+        int hasGoogleVendorLI = hasAttribute(vendorLI, googleId) ? 1 : 0;
 
         org.godotengine.godot.Dictionary dict = new org.godotengine.godot.Dictionary();
-        dict.put("1", new Object[]{purposeTitles[1], hasConsentForSinglePurpose(1, purposeConsent), "N/A"});
-        dict.put("3", new Object[]{purposeTitles[3], hasConsentForSinglePurpose(3, purposeConsent), "N/A"});
-        dict.put("4", new Object[]{purposeTitles[4], hasConsentForSinglePurpose(4, purposeConsent), "N/A"});
-        dict.put("2", new Object[]{purposeTitles[2], hasConsentForSinglePurpose(2, purposeConsent), hasLIForSinglePurpose(2, purposeLI)});
-        dict.put("5", new Object[]{purposeTitles[5], hasConsentForSinglePurpose(5, purposeConsent), hasLIForSinglePurpose(5, purposeLI)});
-        dict.put("6", new Object[]{purposeTitles[6], hasConsentForSinglePurpose(6, purposeConsent), hasLIForSinglePurpose(6, purposeLI)});
-        dict.put("7", new Object[]{purposeTitles[7], hasConsentForSinglePurpose(7, purposeConsent), hasLIForSinglePurpose(7, purposeLI)});
-        dict.put("8", new Object[]{purposeTitles[8], hasConsentForSinglePurpose(8, purposeConsent), hasLIForSinglePurpose(8, purposeLI)});
-        dict.put("9", new Object[]{purposeTitles[9], hasConsentForSinglePurpose(9, purposeConsent), hasLIForSinglePurpose(9, purposeLI)});
-        dict.put("10", new Object[]{purposeTitles[10], hasConsentForSinglePurpose(10, purposeConsent), hasLIForSinglePurpose(10, purposeLI)});
-        dict.put("Google-vendor", new Object[]{purposeTitles[0], hasGoogleVendorConsent, hasGoogleVendorLI});
-        dict.put("Info", "This is raw data. For more convenient checks use one of the canShow...() methods");
+        dict.put("1", new int[]{hasConsentForSinglePurpose(1, purposeConsent), 1});
+        dict.put("3", new int[]{hasConsentForSinglePurpose(3, purposeConsent), 1});
+        dict.put("4", new int[]{hasConsentForSinglePurpose(4, purposeConsent), 1});
+        dict.put("2", new int[]{hasConsentForSinglePurpose(2, purposeConsent), hasLIForSinglePurpose(2, purposeLI)});
+        dict.put("5", new int[]{hasConsentForSinglePurpose(5, purposeConsent), hasLIForSinglePurpose(5, purposeLI)});
+        dict.put("6", new int[]{hasConsentForSinglePurpose(6, purposeConsent), hasLIForSinglePurpose(6, purposeLI)});
+        dict.put("7", new int[]{hasConsentForSinglePurpose(7, purposeConsent), hasLIForSinglePurpose(7, purposeLI)});
+        dict.put("8", new int[]{hasConsentForSinglePurpose(8, purposeConsent), hasLIForSinglePurpose(8, purposeLI)});
+        dict.put("9", new int[]{hasConsentForSinglePurpose(9, purposeConsent), hasLIForSinglePurpose(9, purposeLI)});
+        dict.put("10", new int[]{hasConsentForSinglePurpose(10, purposeConsent), hasLIForSinglePurpose(10, purposeLI)});
+        dict.put("Google-Vendor", new int[]{hasGoogleVendorConsent, hasGoogleVendorLI});
 
-        if (!hasGoogleVendorConsent){
-            dict.put("Consent-warning", "Since Google vendor consent was not obtained, no ads will be shown regardless of other consent settings");
+        boolean basicAds = true;
+        boolean personalisedAds = true;
+
+        if (!canShowAds()){
+            basicAds = false;
+            if ((hasGoogleVendorConsent + hasGoogleVendorLI) < 2) {
+                dict.put("VENDOR-ERROR", "Google vendor consent and/or legitimate interest missing (both are needed).");
+            }
+
+            if (deniedPurposes.size() > 0){
+                dict.put("CONSENT-ERROR", listToIntArray(deniedPurposes));
+            }
+
+            if (deniedFlexiblePurposes.size() > 0){
+                dict.put("LI-ERROR", listToIntArray(deniedFlexiblePurposes));
+            }
+
+
         }
-        if (!hasGoogleVendorLI){
-            dict.put("LI-warning", "Since Google vendor Legitimate Interest was not obtained, no ads will be shown regardless of other consent settings");
+
+        if (!canShowPersonalizedAds()){
+            personalisedAds = false;
+            if (deniedPurposes.size() > 0){
+                dict.put("CONSENT-WARNING", listToIntArray(deniedPurposes));
+            }
+
+            if (deniedFlexiblePurposes.size() > 0){
+                dict.put("LI-WARNING", listToIntArray(deniedFlexiblePurposes));
+            }
+
+
+        }
+
+        if (basicAds && personalisedAds){
+            dict.put("STATUS", 2);
+        } else if (basicAds) {
+            dict.put("STATUS", 1);
+        } else {
+            dict.put("STATUS", 0);
         }
 
         return dict;
@@ -194,22 +247,10 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
     }
 
     /**
-     * Creates and returns a Godot compatible dictionary with a single entry for a single purpose, by index, where index is 1-10
-     * Additionally, the Google vendor purpose statuses can be requested with a value of 0.
-     * If the index is out of range, the dictionary will contain an error message
-     *
-     * Legitimate interest is not applicable for purposes 1, 3 and 4
-     *
-     * (The reason for using Dictionary is that the Godot Android plugin system supports very limited return datatypes
-     * @param index The numerical index of the Purpose, 1-10, or 0 for Google vendor status
-     * @return org.godotengine.godot.Dictionary with one key, where the key is the purpose's index, followed by a
-     * simple Object array of the Purposes full name, consent status (boolean), and LI status (boolean where applicable)
+     * ToDo
      */
     @UsedByGodot
     public org.godotengine.godot.Dictionary getRawConsentStatusForSinglePurpose(int index) {
-        SharedPreferences prefs = context.getSharedPreferences(context.getPackageName() + "_preferences", Context.MODE_PRIVATE);
-        String purposeConsent = prefs.getString("IABTCF_PurposeConsents", "");
-
         List<Integer> basicConsentIds = new ArrayList<>();
         basicConsentIds.add(1);
         basicConsentIds.add(3);
@@ -224,22 +265,25 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
         consentOrLIIds.add(9);
         consentOrLIIds.add(10);
 
+        SharedPreferences prefs = context.getSharedPreferences(context.getPackageName() + "_preferences", Context.MODE_PRIVATE);
+        String purposeConsent = prefs.getString("IABTCF_PurposeConsents", "");
         org.godotengine.godot.Dictionary dict = new org.godotengine.godot.Dictionary();
+
         if (basicConsentIds.contains(index)) {
-            dict.put(String.valueOf(index), new Object[]{purposeTitles[index], hasConsentForSinglePurpose(index, purposeConsent), "N/A"});
+            dict.put(String.valueOf(index), new int[]{hasConsentForSinglePurpose(index, purposeConsent), 1});
         } else if (consentOrLIIds.contains(index)) {
             String purposeLI = prefs.getString("IABTCF_PurposeLegitimateInterests", "");
-            dict.put(String.valueOf(index), new Object[]{purposeTitles[8], hasConsentForSinglePurpose(index, purposeConsent), hasLIForSinglePurpose(index, purposeLI)});
+            dict.put(String.valueOf(index), new int[]{hasConsentForSinglePurpose(index, purposeConsent), hasLIForSinglePurpose(index, purposeLI)});
         } else if (index == 0) {
             String vendorConsent = prefs.getString("IABTCF_VendorConsents", "");
             String vendorLI = prefs.getString("IABTCF_VendorLegitimateInterests", "");
             int googleId = 755;
-            boolean hasGoogleVendorConsent = hasAttribute(vendorConsent, googleId);
-            boolean hasGoogleVendorLI = hasAttribute(vendorLI, googleId);
-            dict.put("google-vendor", new Object[]{purposeTitles[0], hasGoogleVendorConsent, hasGoogleVendorLI});
+            int hasGoogleVendorConsent = hasAttribute(vendorConsent, googleId) ? 1 : 0;
+            int hasGoogleVendorLI = hasAttribute(vendorLI, googleId) ? 1 : 0;
+            dict.put("GOOGLE-VENDOR", new int[]{hasGoogleVendorConsent, hasGoogleVendorLI});
         } else {
             Log.e(TAG, "Invalid consent index");
-            dict.put("Invalid-index", "Index should be between 0 and 10: 0 for Google vendor consent, 1-10 for named purposes");
+            dict.put("INDEX-ERROR", "Index should be between 0 and 10: 0 for Google vendor consent, 1-10 for named purposes");
         }
         return dict;
     }
