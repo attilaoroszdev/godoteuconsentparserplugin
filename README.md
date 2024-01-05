@@ -77,10 +77,11 @@ if Engine.has_singleton("EUConsentStringParser"):
 
 ### Dictionary methods (read consent details)
 
-The following methods will return dictionaries, in a format where the key represents the Purpose's number or "GV" for Google vendor;  while the value will be an `int[]`, where the first item of which represents the status of user consent (1-for granted, 0-for denied), and the second representing the status of legitimate interest (1-for granted, 0-for denied). Something like this:
+The following methods will return dictionaries, in a format where the key represents the Purpose's number or "GV" for Google vendor;  while the value will be an `int[]`, where the first item of which represents the status of user consent (1-for granted, 0-for denied), and the second representing the status of legitimate interest (1-for granted, 0-for denied). 
+
+E.g. if the user granted both consent and legitimate interest for "Purpose 2 - Select basic ads", the entry should look something like this:
 
 ```
-# User granted both consent and legitimate interest for "Purpose 2 - Select basic ads":
 {"2": [1, 1]}
 ```
 
@@ -162,7 +163,7 @@ For example, for "Purpose 2 - Select basic ads", you would see something like th
 {"2": [1, 0]}
 
 # User denied both consent and legitimate interest:
-{"2": [1, 1]}
+{"2": [0, 0]}
 
 ```
 
@@ -198,9 +199,9 @@ Or like this, if the user has given the absolute minimal consent to show non-per
 "GV": [1, 1]}
 ```
 
-**Notes: **
-- Legitimate interest for Consent purposes 1,3 and for 4 is not currently applicable, for simplicity's sake, those fields will b set to whatever the consent status is
-- Purposes 5, 6 and 8 are not taken into consideration in showing either personalised and non-personalised ads, but I have included them here for completeness' sake, and for anyone interested in them for any reason.
+**Notes:**
+- **Legitimate interest for Consent purposes 1,3 and for 4 is not currently applicable**, for simplicity's sake, those fields will be set to whatever the consent status is
+- **Purposes 5, 6 and 8 are not taken into consideration** in showing either personalised and non-personalised ads, but I have included them here for completeness' sake, and for anyone interested in them for any reason.
 
 You can parse this dictionary easily enough, so you can gently remind your users that some functionality (rewards, for example) will require them to change their consent, if necessary.
 
@@ -259,9 +260,9 @@ The returned Dictionary might or might not have the following keys:
     - `1`: Only **non-personalised** ads can be served
     - `2`: **Personalised ads** can be served
 - `"MISSING_MANDATORY_CONSENT":` A list of purpose numbers, necessary for serving **any ads** where **consent was not given**
-- `"MISSING_PERSONALISED_CONSENT":` A list of purpose numbers, necessary for serving **personalised ads** where **consent was **not given**
-- `"MISSING_CONSENT_OR_LEGIT_INTEREST":` A list of purpose numbers, necessary for serving **any ads** where consent *or* legitimate interest was **not given**
-- `MISSING_VENDOR_CONSENT:` Always returns the value: `Google Advertising Products vendor consent and/or legitimate interest missing (both are needed)`, since it's meaningless to check which is missing
+- `"MISSING_PERSONALISED_CONSENT":` A list of purpose numbers, necessary for serving **personalised ads** where **consent was not given**
+- `"MISSING_CONSENT_OR_LEGIT_INTEREST":` A list of purpose numbers, necessary for serving **any ads** where **consent *or* legitimate interest was not given**
+- `MISSING_VENDOR_CONSENT:` Always has the value: `Google Advertising Products vendor consent and/or legitimate interest missing (both are needed)`, since it's meaningless to check which is missing (only present if applicable, of course)
 
 If the `"ADS_STATUS"` key has the value of `2`, the Dictionary should have no other keys. In any other case, you will find at least one of the above, so it's worth checking all of them.
 
@@ -288,7 +289,7 @@ If, for argument's sake (and to illustrate the point), the user goes as far as e
 
 **In case you can't serve personalised ads (`ADS_STATUS: 1`)**:
 
-If the user somehow managed to set nn-personalised ads only (very unlikely under the current conditions with the official AdMob popup), the Dictionary will look like this:
+If the user somehow managed to set non-personalised ads only (very unlikely under the current conditions with the official AdMob popup), the Dictionary will look like this:
 
 ```
 {"ADS_STATUS": 1,
