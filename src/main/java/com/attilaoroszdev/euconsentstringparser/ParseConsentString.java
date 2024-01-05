@@ -11,6 +11,7 @@ import java.util.List;
 
 public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin {
     private static final String TAG = "ParseConsentString";
+    private SharedPreferences prefs;
     private List<Integer> deniedPurposes = new ArrayList<>();
     private List<Integer> deniedFlexiblePurposes = new ArrayList<>();
 
@@ -20,6 +21,7 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
 //    private Context context = this.getActivity();
     public ParseConsentString(Godot godot) {
         super(godot);
+        prefs = context.getSharedPreferences(context.getPackageName() + "_preferences", Context.MODE_PRIVATE);
     }
 
     @NonNull
@@ -42,7 +44,6 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
             if (!hasAttribute(purposeConsent, p)) {
                 deniedPurposes.add(p);
                 Log.e(TAG, "hasConsentFor: denied for purpose #" + p );
-
             }
         }
         if (deniedPurposes.size() > 0) return false;
@@ -77,13 +78,19 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
 
         return isOK;
     }
+    @UsedByGodot
+    public boolean consentIsNeeded(){
+
+        int gdprApplies = prefs.getInt("IABTCF_gdprApplies", 0);
+        return gdprApplies == 1;
+    }
 
 
     @UsedByGodot
     public boolean canShowAds(){
         deniedPurposes.clear();
         deniedFlexiblePurposes.clear();
-        SharedPreferences prefs = context.getSharedPreferences(context.getPackageName() + "_preferences", Context.MODE_PRIVATE);
+//        SharedPreferences prefs = context.getSharedPreferences(context.getPackageName() + "_preferences", Context.MODE_PRIVATE);
         String purposeConsent = prefs.getString("IABTCF_PurposeConsents", "");
         String vendorConsent = prefs.getString("IABTCF_VendorConsents","");
         String vendorLI = prefs.getString("IABTCF_VendorLegitimateInterests","");
@@ -114,7 +121,7 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
     public boolean canShowPersonalizedAds(){
         deniedPurposes.clear();
         deniedFlexiblePurposes.clear();
-        SharedPreferences prefs = context.getSharedPreferences(context.getPackageName() + "_preferences", Context.MODE_PRIVATE);
+//        SharedPreferences prefs = context.getSharedPreferences(context.getPackageName() + "_preferences", Context.MODE_PRIVATE);
         String purposeConsent = prefs.getString("IABTCF_PurposeConsents", "");
         String vendorConsent = prefs.getString("IABTCF_VendorConsents","");
         String vendorLI = prefs.getString("IABTCF_VendorLegitimateInterests","");
@@ -176,22 +183,22 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
      * ToDo
      */
     @UsedByGodot
-    public org.godotengine.godot.Dictionary getRawConsentStatusForAllPurposes(){
+    public org.godotengine.godot.Dictionary getRawConsentStatusForAllPurposes() {
 
-        SharedPreferences prefs = context.getSharedPreferences(context.getPackageName() + "_preferences", Context.MODE_PRIVATE);
+//        SharedPreferences prefs = context.getSharedPreferences(context.getPackageName() + "_preferences", Context.MODE_PRIVATE);
         String purposeConsent = prefs.getString("IABTCF_PurposeConsents", "");
-        String vendorConsent = prefs.getString("IABTCF_VendorConsents","");
-        String vendorLI = prefs.getString("IABTCF_VendorLegitimateInterests","");
-        String purposeLI = prefs.getString("IABTCF_PurposeLegitimateInterests","");
+        String vendorConsent = prefs.getString("IABTCF_VendorConsents", "");
+        String vendorLI = prefs.getString("IABTCF_VendorLegitimateInterests", "");
+        String purposeLI = prefs.getString("IABTCF_PurposeLegitimateInterests", "");
 
         int googleId = 755;
         int hasGoogleVendorConsent = hasAttribute(vendorConsent, googleId) ? 1 : 0;
         int hasGoogleVendorLI = hasAttribute(vendorLI, googleId) ? 1 : 0;
 
         org.godotengine.godot.Dictionary dict = new org.godotengine.godot.Dictionary();
-        dict.put("1", new int[]{hasConsentForSinglePurpose(1, purposeConsent), 1});
-        dict.put("3", new int[]{hasConsentForSinglePurpose(3, purposeConsent), 1});
-        dict.put("4", new int[]{hasConsentForSinglePurpose(4, purposeConsent), 1});
+        dict.put("1", new int[]{hasConsentForSinglePurpose(1, purposeConsent), hasConsentForSinglePurpose(1, purposeConsent)});
+        dict.put("3", new int[]{hasConsentForSinglePurpose(3, purposeConsent), hasConsentForSinglePurpose(3, purposeConsent)});
+        dict.put("4", new int[]{hasConsentForSinglePurpose(4, purposeConsent), hasConsentForSinglePurpose(4, purposeConsent)});
         dict.put("2", new int[]{hasConsentForSinglePurpose(2, purposeConsent), hasLIForSinglePurpose(2, purposeLI)});
         dict.put("5", new int[]{hasConsentForSinglePurpose(5, purposeConsent), hasLIForSinglePurpose(5, purposeLI)});
         dict.put("6", new int[]{hasConsentForSinglePurpose(6, purposeConsent), hasLIForSinglePurpose(6, purposeLI)});
@@ -199,52 +206,10 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
         dict.put("8", new int[]{hasConsentForSinglePurpose(8, purposeConsent), hasLIForSinglePurpose(8, purposeLI)});
         dict.put("9", new int[]{hasConsentForSinglePurpose(9, purposeConsent), hasLIForSinglePurpose(9, purposeLI)});
         dict.put("10", new int[]{hasConsentForSinglePurpose(10, purposeConsent), hasLIForSinglePurpose(10, purposeLI)});
-        dict.put("Google-Vendor", new int[]{hasGoogleVendorConsent, hasGoogleVendorLI});
-
-        boolean basicAds = true;
-        boolean personalisedAds = true;
-
-        if (!canShowAds()){
-            basicAds = false;
-            if ((hasGoogleVendorConsent + hasGoogleVendorLI) < 2) {
-                dict.put("VENDOR-ERROR", "Google vendor consent and/or legitimate interest missing (both are needed).");
-            }
-
-            if (deniedPurposes.size() > 0){
-                dict.put("CONSENT-ERROR", listToIntArray(deniedPurposes));
-            }
-
-            if (deniedFlexiblePurposes.size() > 0){
-                dict.put("LI-ERROR", listToIntArray(deniedFlexiblePurposes));
-            }
-
-
-        }
-
-        if (!canShowPersonalizedAds()){
-            personalisedAds = false;
-            if (deniedPurposes.size() > 0){
-                dict.put("CONSENT-WARNING", listToIntArray(deniedPurposes));
-            }
-
-            if (deniedFlexiblePurposes.size() > 0){
-                dict.put("LI-WARNING", listToIntArray(deniedFlexiblePurposes));
-            }
-
-
-        }
-
-        if (basicAds && personalisedAds){
-            dict.put("STATUS", 2);
-        } else if (basicAds) {
-            dict.put("STATUS", 1);
-        } else {
-            dict.put("STATUS", 0);
-        }
-
+        dict.put("GV", new int[]{hasGoogleVendorConsent, hasGoogleVendorLI});
         return dict;
-
     }
+
 
     /**
      * ToDo
@@ -265,12 +230,12 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
         consentOrLIIds.add(9);
         consentOrLIIds.add(10);
 
-        SharedPreferences prefs = context.getSharedPreferences(context.getPackageName() + "_preferences", Context.MODE_PRIVATE);
+//        SharedPreferences prefs = context.getSharedPreferences(context.getPackageName() + "_preferences", Context.MODE_PRIVATE);
         String purposeConsent = prefs.getString("IABTCF_PurposeConsents", "");
         org.godotengine.godot.Dictionary dict = new org.godotengine.godot.Dictionary();
 
         if (basicConsentIds.contains(index)) {
-            dict.put(String.valueOf(index), new int[]{hasConsentForSinglePurpose(index, purposeConsent), 1});
+            dict.put(String.valueOf(index), new int[]{hasConsentForSinglePurpose(index, purposeConsent), hasConsentForSinglePurpose(index, purposeConsent)});
         } else if (consentOrLIIds.contains(index)) {
             String purposeLI = prefs.getString("IABTCF_PurposeLegitimateInterests", "");
             dict.put(String.valueOf(index), new int[]{hasConsentForSinglePurpose(index, purposeConsent), hasLIForSinglePurpose(index, purposeLI)});
@@ -280,11 +245,77 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
             int googleId = 755;
             int hasGoogleVendorConsent = hasAttribute(vendorConsent, googleId) ? 1 : 0;
             int hasGoogleVendorLI = hasAttribute(vendorLI, googleId) ? 1 : 0;
-            dict.put("GOOGLE-VENDOR", new int[]{hasGoogleVendorConsent, hasGoogleVendorLI});
+            dict.put("GV", new int[]{hasGoogleVendorConsent, hasGoogleVendorLI});
         } else {
             Log.e(TAG, "Invalid consent index");
-            dict.put("INDEX-ERROR", "Index should be between 0 and 10: 0 for Google vendor consent, 1-10 for named purposes");
+            dict.put("IDX_OOB_ERROR", "Index should be between 0 and 10: 0 for Google vendor consent, 1-10 for any named purposes");
         }
+        return dict;
+    }
+
+
+
+    @UsedByGodot
+    public org.godotengine.godot.Dictionary getConsentStatusIssuesList(){
+//        SharedPreferences prefs = context.getSharedPreferences(context.getPackageName() + "_preferences", Context.MODE_PRIVATE);
+        String vendorConsent = prefs.getString("IABTCF_VendorConsents", "");
+        String vendorLI = prefs.getString("IABTCF_VendorLegitimateInterests", "");
+
+        int googleId = 755;
+        int hasGoogleVendorConsent = hasAttribute(vendorConsent, googleId) ? 1 : 0;
+        int hasGoogleVendorLI = hasAttribute(vendorLI, googleId) ? 1 : 0;
+        boolean basicAds = true;
+        boolean personalisedAds = true;
+
+        org.godotengine.godot.Dictionary dict = new org.godotengine.godot.Dictionary();
+        if (!canShowAds()){
+            basicAds = false;
+            if ((hasGoogleVendorConsent + hasGoogleVendorLI) < 2) {
+                dict.put("MISSING_VENDOR_CONSENT", "Google Advertising Products vendor consent and/or legitimate interest missing (both are needed).");
+            }
+
+            if (deniedPurposes.size() > 0){
+                dict.put("MISSING_MANDATORY_CONSENT", listToIntArray(deniedPurposes));
+            }
+
+            if (deniedFlexiblePurposes.size() > 0){
+                dict.put("MISSING_CONSENT_OR_LEGIT_INTEREST", listToIntArray(deniedFlexiblePurposes));
+            }
+        }
+
+        if (!canShowPersonalizedAds()){
+            personalisedAds = false;
+            if (deniedPurposes.size() > 0){
+                dict.put("MISSING_PERSONALISED_CONSENT", listToIntArray(deniedPurposes));
+            }
+        }
+
+        if (basicAds && personalisedAds){
+            dict.put("ADS_STATUS", 2);
+        } else if (basicAds) {
+            dict.put("ADS_STATUS", 1);
+        } else {
+            dict.put("ADS_STATUS", 0);
+        }
+
+        return dict;
+    }
+
+
+    @UsedByGodot
+    public org.godotengine.godot.Dictionary getFullPurposeNamesByKey(){
+        org.godotengine.godot.Dictionary dict = new org.godotengine.godot.Dictionary();
+        dict.put("1", "Purpose 1 - Store and/or access information on a device");
+        dict.put("2", "Purpose 2 - Select basic ads");
+        dict.put("3", "Purpose 3 - Create a personalised ads profile");
+        dict.put("4", "Purpose 4 - Select personalised ads");
+        dict.put("5", "Purpose 5 - Create a personalised content profile");
+        dict.put("6", "Purpose 6 - Select personalised content");
+        dict.put("7", "Purpose 7 - Measure ad performance");
+        dict.put("8", "Purpose 8 - Measure content performance");
+        dict.put("9", "Purpose 9 - Apply market research to generate audience insights");
+        dict.put("10", "Purpose 10 - Develop and improve products");
+        dict.put("GV", "Google Advertising Products vendor consent anf legitimate interest");
         return dict;
     }
 
