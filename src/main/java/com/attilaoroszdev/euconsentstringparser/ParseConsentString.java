@@ -30,15 +30,32 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
         return "EUConsentStringParser";
     }
 
+
+    /******************************************
+     *                                        *
+     *  Private methods used to check things  *
+     *                                        *
+     ******************************************/
+
+
     /**
-     * The original methods from https://itnext.io/android-admob-consent-with-ump-personalized-or-non-personalized-ads-in-eea-3592e192ec90
-     * adapted to be used as a Godot Android plugin
+     * ToDo
+     * @param input
+     * @param index
+     * @return
      */
     private boolean hasAttribute(String input, int index) {
         if (input == null) return false;
         return input.length() >= index && input.charAt(index-1) == '1';
     }
 
+    /**
+     * ToDo
+     * @param indexes
+     * @param purposeConsent
+     * @param hasVendorConsent
+     * @return
+     */
     private boolean hasConsentFor(List<Integer> indexes, String purposeConsent, boolean hasVendorConsent) {
         for (Integer p: indexes) {
             if (!hasAttribute(purposeConsent, p)) {
@@ -55,6 +72,15 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
      * since it's part of the minimum requirements for showing ads. Great for simple yes/no checks
      */
 
+    /**
+     * ToDo
+     * @param indexes
+     * @param purposeConsent
+     * @param purposeLI
+     * @param hasVendorConsent
+     * @param hasVendorLI
+     * @return
+     */
     private boolean hasConsentOrLegitimateInterestFor(List<Integer> indexes, String purposeConsent, String purposeLI, boolean hasVendorConsent, boolean hasVendorLI){
         boolean isOK = true;
         for (Integer n: indexes) {
@@ -78,6 +104,55 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
 
         return isOK;
     }
+
+    /**
+     * ToDo
+     * @param index
+     * @param purposeConsent
+     * @return
+     */
+    private int hasConsentForSinglePurpose(int index, String purposeConsent){
+        return hasAttribute(purposeConsent, index) ? 1 : 0;
+
+    }
+
+    /**
+     * ToDo
+     * @param index
+     * @param purposeLI
+     * @return
+     */
+    private int hasLIForSinglePurpose(int index, String purposeLI){
+        return hasAttribute(purposeLI, index) ? 1 : 0;
+    }
+
+    /**
+     * ToDo
+     * Can't do stream().mapToInt on the List, because minSDK < 24
+     * @param list
+     * @return
+     */
+    private int[] listToIntArray(List<Integer> list){
+        int[] result = new int[list.size()];
+        for (int i = 0; i < result.length; i++){
+            result[i] = list.get(i);
+        }
+        return result;
+    }
+
+
+
+    /*************************************
+     *                                   *
+     *  Public methods exposed to Godot  *
+     *                                   *
+     *************************************/
+
+
+    /**
+     * ToDo
+     * @return
+     */
     @UsedByGodot
     public boolean consentIsNeeded(){
 
@@ -85,12 +160,14 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
         return gdprApplies == 1;
     }
 
-
+    /**
+     * ToDo
+     * @return
+     */
     @UsedByGodot
     public boolean canShowAds(){
         deniedPurposes.clear();
         deniedFlexiblePurposes.clear();
-//        SharedPreferences prefs = context.getSharedPreferences(context.getPackageName() + "_preferences", Context.MODE_PRIVATE);
         String purposeConsent = prefs.getString("IABTCF_PurposeConsents", "");
         String vendorConsent = prefs.getString("IABTCF_VendorConsents","");
         String vendorLI = prefs.getString("IABTCF_VendorLegitimateInterests","");
@@ -112,16 +189,18 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
         boolean consentOK = hasConsentFor(indexes, purposeConsent, hasGoogleVendorConsent);
         boolean legitimateInterestOK = hasConsentOrLegitimateInterestFor(indexesLI, purposeConsent, purposeLI, hasGoogleVendorConsent, hasGoogleVendorLI);
 
+        if (!consentIsNeeded()) return true;
         return consentOK && legitimateInterestOK;
-
-
     }
 
+    /**
+     * ToDo
+     * @return
+     */
     @UsedByGodot
     public boolean canShowPersonalizedAds(){
         deniedPurposes.clear();
         deniedFlexiblePurposes.clear();
-//        SharedPreferences prefs = context.getSharedPreferences(context.getPackageName() + "_preferences", Context.MODE_PRIVATE);
         String purposeConsent = prefs.getString("IABTCF_PurposeConsents", "");
         String vendorConsent = prefs.getString("IABTCF_VendorConsents","");
         String vendorLI = prefs.getString("IABTCF_VendorLegitimateInterests","");
@@ -145,47 +224,16 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
         boolean consentOK = hasConsentFor(indexes, purposeConsent, hasGoogleVendorConsent);
         boolean legitimateInterestOK = hasConsentOrLegitimateInterestFor(indexesLI, purposeConsent, purposeLI, hasGoogleVendorConsent, hasGoogleVendorLI);
 
+        if (!consentIsNeeded()) return true;
         return consentOK && legitimateInterestOK;
-
     }
 
-
-    /**
-     * New additions for obtaining raw consent info for all 10 main purposes
-     * Google vendor consent + LI checks were removed to always return the correct status, even if
-     * vendor consent or LI are false
-     */
-
-    private int hasConsentForSinglePurpose(int index, String purposeConsent){
-        return hasAttribute(purposeConsent, index) ? 1 : 0;
-
-    }
-
-    private int hasLIForSinglePurpose(int index, String purposeLI){
-        return hasAttribute(purposeLI, index) ? 1 : 0;
-    }
-
-    /**
-     * ToDo
-     * Can't do stream().mapToInt on the List, because minSDK < 24
-     * @param list
-     * @return
-     */
-    private int[] listToIntArray(List<Integer> list){
-        int[] result = new int[list.size()];
-        for (int i = 0; i < result.length; i++){
-            result[i] = list.get(i);
-        }
-        return result;
-    }
 
     /**
      * ToDo
      */
     @UsedByGodot
     public org.godotengine.godot.Dictionary getRawConsentStatusForAllPurposes() {
-
-//        SharedPreferences prefs = context.getSharedPreferences(context.getPackageName() + "_preferences", Context.MODE_PRIVATE);
         String purposeConsent = prefs.getString("IABTCF_PurposeConsents", "");
         String vendorConsent = prefs.getString("IABTCF_VendorConsents", "");
         String vendorLI = prefs.getString("IABTCF_VendorLegitimateInterests", "");
@@ -230,7 +278,6 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
         consentOrLIIds.add(9);
         consentOrLIIds.add(10);
 
-//        SharedPreferences prefs = context.getSharedPreferences(context.getPackageName() + "_preferences", Context.MODE_PRIVATE);
         String purposeConsent = prefs.getString("IABTCF_PurposeConsents", "");
         org.godotengine.godot.Dictionary dict = new org.godotengine.godot.Dictionary();
 
@@ -253,11 +300,12 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
         return dict;
     }
 
-
-
+    /**
+     * ToDo
+     * @return
+     */
     @UsedByGodot
     public org.godotengine.godot.Dictionary getConsentStatusIssuesList(){
-//        SharedPreferences prefs = context.getSharedPreferences(context.getPackageName() + "_preferences", Context.MODE_PRIVATE);
         String vendorConsent = prefs.getString("IABTCF_VendorConsents", "");
         String vendorLI = prefs.getString("IABTCF_VendorLegitimateInterests", "");
 
@@ -268,6 +316,12 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
         boolean personalisedAds = true;
 
         org.godotengine.godot.Dictionary dict = new org.godotengine.godot.Dictionary();
+
+        if (!consentIsNeeded()) {
+            dict.put("ADS_STATUS", 3);
+            return dict;
+        }
+
         if (!canShowAds()){
             basicAds = false;
             if ((hasGoogleVendorConsent + hasGoogleVendorLI) < 2) {
@@ -301,7 +355,10 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
         return dict;
     }
 
-
+    /**
+     * ToDo
+     * @return
+     */
     @UsedByGodot
     public org.godotengine.godot.Dictionary getFullPurposeNamesByKey(){
         org.godotengine.godot.Dictionary dict = new org.godotengine.godot.Dictionary();
