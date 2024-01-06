@@ -95,7 +95,11 @@ If this looks complicated, you can thank Google, the EU, and my own inability to
 
 ## Usage (detailed)
 
-If you don't want to use the singleton directly, have a look at the Godot wrapper script, which makes things more Godot-friendly and, occasionally, user friendly. The Godot code is (kind of) annotated and self explanatory, but it might not hurt to read the more details stuff below, still.
+If you don't want to use the singleton directly, have a look at the Godot wrapper script in thje `/gdscript` folder, which makes things more Godot-friendly and, occasionally, user friendly. The Godot code is (badly) annotated and (kind of ) self explanatory (but it might not hurt to read the more details stuff below, still).
+
+You can use the script as is, even AutoLoad it, or modify it, copy/paste parts of it, sue it as an example, inspiration, or even toilet paper, if you print it out.
+
+If you want to use the singleton directly, or want to understand better what's happening where (any why), read on...
 
 ### Simple checks
 
