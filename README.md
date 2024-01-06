@@ -30,7 +30,7 @@ Google seems reluctant to fix this, or even document it properly, despite repeat
 
 Of course, everything works just fine if the user presses the *Consent*, or *Accept all buttons*, on either screen, but you as a developer had no way to know what they chose (or even maybe explicitly denied consent, if that option is available)… 
 
-**UNTIL NOW!*** (*drumroll*)
+**UNTIL NOW!** (*drumroll*)
 
 ## The Solution
 
