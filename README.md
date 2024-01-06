@@ -102,7 +102,7 @@ If you don't want to use the singleton directly, have a look at the Godot wrappe
 First of all, you might want to check if GDPR even applies to the user:
 
 ```
-consetnParser.consentIsNeeded() --> bool 
+consetnParser.consentIsNeeded() -> bool 
 ```
 
 Returns `true` for users within the EEA (or the EU and GB, however Google implemented it), to whom GDPR applies (i.e. inside the EEA), and `false` in every other case. The Google Mobile Ads SDK or UMP SDK would already tell you this when checking consent status, but it does not hurt being able to manually check from here as well. 
