@@ -52,27 +52,38 @@ func has_consent_issues() -> bool:
 # The Arrays in[0], [1], and [2] will be empty if no issues are found
 # [3] will be false i no vendor consent issue is found
 func get_all_consent_issues()-> Array:
-	return [denied_mandatory_consents, denied_personalised_consents, denied_consent_or_legit_interests, missing_vendor_consent]
-
+	if has_consent_issues():
+		return [denied_mandatory_consents, denied_personalised_consents, denied_consent_or_legit_interests, missing_vendor_consent]
+	else:
+		return []
 # Get the ids of Purpses where consent was denied
 # resulting in not being able to show ANY ads
 func get_denied_mandatory_consents() -> Array:
-	return denied_mandatory_consents
+	if has_consent_issues():
+		return denied_mandatory_consents
+	return []
 
 # Get the ids of Purpses where consent was denied
 # resulting in not being able to show PERSONALISED ads
 func get_denied_personalised_consents() -> Array:
-	return denied_personalised_consents
+	if has_consent_issues():
+		return denied_personalised_consents
+	return []
 
 # Get the ids of Purpses where consent OR legitimate interest was denied
 # resulting in not being able to show ANY ads
 func get_denied_consent_or_legit_interests() -> Array:
-	return denied_consent_or_legit_interests
+	if has_consent_issues():
+		return denied_consent_or_legit_interests
+	return []
 
 # If false, Google Advertising Products vendor does not have sufficient consent
 # (it needs both consent and legitimate interest to be graned), and NO ADS can be served
 func is_missing_vendor_consent() -> bool:
-	return missing_vendor_consent
+	if has_consent_issues():
+		return missing_vendor_consent
+	else:
+		return false
 
 # Gets the raw statuses for all Purposes in its raw Dictionary format
 # Keys for purposes are the Purpose ids represented by their number (1-10)
@@ -180,6 +191,48 @@ func get_all_consent_issues_as_text() -> Array:
 		for id in denied_mandatory_consents:
 			var consent_name = purpose_names_dict[str(id)] + ": missing consent"
 			issues_texts.append(consent_name)
+		for id in denied_personalised_consents:
+			var consent_name = purpose_names_dict[str(id)] + ": missing consent for personalised ads"
+			issues_texts.append(consent_name)
+		for id in denied_consent_or_legit_interests:
+			var consent_name = purpose_names_dict[str(id)] + ": missing consent or legitimate interest"
+			issues_texts.append(consent_name)
+		if missing_vendor_consent:
+			if not get_consent_status_by_id(0)[0]:
+				issues_texts.append("Google Advertising Products: missing vendor consent")
+			if not get_consent_status_by_id(0)[0]:
+				issues_texts.append("Google Advertising Products: vendor missing legitmate interest")
+	
+	return issues_texts
+
+# Same as above, only without personalised consent details. Shows the issues preventing
+# you fromn showing ANY ads
+func get_limited_consent_issues_as_text() -> Array:
+	var issues_texts:Array = []
+	var purpose_names_dict:Dictionary = get_purpose_names()
+	
+	if denied_mandatory_consents.size() > 0:
+		for id in denied_mandatory_consents:
+			var consent_name = purpose_names_dict[str(id)] + ": missing consent"
+			issues_texts.append(consent_name)
+		for id in denied_consent_or_legit_interests:
+			var consent_name = purpose_names_dict[str(id)] + ": missing consent or legitimate interest"
+			issues_texts.append(consent_name)
+		if missing_vendor_consent:
+			if not get_consent_status_by_id(0)[0]:
+				issues_texts.append("Google Advertising Products: missing vendor consent")
+			if not get_consent_status_by_id(0)[0]:
+				issues_texts.append("Google Advertising Products: vendor missing legitmate interest")
+	
+	return issues_texts
+	
+# Same as above, only without basic consent details. Shows the issues preventing
+# you fromn showing PERSONALISED ads
+func get_personalised_consent_issues_as_text() -> Array:
+	var issues_texts:Array = []
+	var purpose_names_dict:Dictionary = get_purpose_names()
+	
+	if denied_mandatory_consents.size() > 0:
 		for id in denied_personalised_consents:
 			var consent_name = purpose_names_dict[str(id)] + ": missing consent for personalised ads"
 			issues_texts.append(consent_name)
