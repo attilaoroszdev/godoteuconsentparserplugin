@@ -200,7 +200,7 @@ func get_all_consent_issues_as_text() -> Array:
 		if missing_vendor_consent:
 			if not get_consent_status_by_id(0)[0]:
 				issues_texts.append("Google Advertising Products: missing vendor consent")
-			if not get_consent_status_by_id(0)[0]:
+			if not get_consent_status_by_id(0)[1]:
 				issues_texts.append("Google Advertising Products: vendor missing legitmate interest")
 	
 	return issues_texts
