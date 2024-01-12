@@ -13,14 +13,14 @@ func _ready():
 	else:
 		push_error("EUConsentStringParser singleton not found")
 
-# To check if GDPR applies to user at all
-func is_consent_needed():
+# To check if GDPR applies to the user at all
+func is_consent_needed() -> bool:
 	return consentParser.consentIsNeeded()
 
 
 # Returns a boolean array, where 
-# [0] - is for basic (or any) ads
-# [1] - is for personalised ads
+# index [0] - is for basic (or any) ads
+# index [1] - is for personalised ads
 # So basically:
 # [true, true] - means personalised ads can be served
 # [true, false] - means only non-personaised ads can be served
@@ -30,7 +30,7 @@ func is_consent_sufficient() -> Array:
 
 # Checks for any issues with consent, and stores them in the appropriate variables
 # the variables can be accessed raw, or you can use one of the methods below.
-# The returned boolean is onyl false if -ersonalised ads can be served. might be a bit redundant, TBH
+# The returned boolean is only false if personalised ads can be served (it's used by other functions, internally)
 func has_consent_issues() -> bool:
 	var issues:Dictionary = consentParser.getConsentStatusIssuesList()
 	
@@ -49,19 +49,22 @@ func has_consent_issues() -> bool:
 
 
 # Returns an Array of all known issues. 
-# The Arrays in[0], [1], and [2] will be empty if no issues are found
-# [3] will be false i no vendor consent issue is found
+# The Arrays in indices [0], [1], and [2] will be empty if no issues are found
+# index [3] will be be false (a single boolean, not an array) if no vendor consent issue is found
 func get_all_consent_issues()-> Array:
 	if has_consent_issues():
 		return [denied_mandatory_consents, denied_personalised_consents, denied_consent_or_legit_interests, missing_vendor_consent]
 	else:
 		return []
+
+
 # Get the ids of Purpses where consent was denied
 # resulting in not being able to show ANY ads
 func get_denied_mandatory_consents() -> Array:
 	if has_consent_issues():
 		return denied_mandatory_consents
 	return []
+
 
 # Get the ids of Purpses where consent was denied
 # resulting in not being able to show PERSONALISED ads
@@ -70,12 +73,14 @@ func get_denied_personalised_consents() -> Array:
 		return denied_personalised_consents
 	return []
 
+
 # Get the ids of Purpses where consent OR legitimate interest was denied
 # resulting in not being able to show ANY ads
 func get_denied_consent_or_legit_interests() -> Array:
 	if has_consent_issues():
 		return denied_consent_or_legit_interests
 	return []
+
 
 # If false, Google Advertising Products vendor does not have sufficient consent
 # (it needs both consent and legitimate interest to be graned), and NO ADS can be served
@@ -85,14 +90,15 @@ func is_missing_vendor_consent() -> bool:
 	else:
 		return false
 
+
 # Gets the raw statuses for all Purposes in its raw Dictionary format
 # Keys for purposes are the Purpose ids represented by their number (1-10)
 # The key for the Google Advertising Products vendor is "GV"
-# The value for each key will be an int Array, where [0] is for consent and [1] is for legitimate interest
+# The value for each key will be an int Array, where index [0] is for consent and index [1] is for legitimate interest
 # For example:
 # {"2": [1,1]} - means that for Purpose 2, both consent and legitimate interest were GRANTED
 # {"2": [0,1]} - means that for Purpose 2, consent was DENIED but legitimate interest was GRANTED
-# {"2": [1,0]} - means that for Purpose 2, both consent was GRANTED and legitimate interest was DENIED
+# {"2": [1,0]} - means that for Purpose 2, consent was GRANTED and legitimate interest was DENIED
 # {"2": [0,0]} - means that for Purpose 2, both consent and legitimate interest were DENIED
 func get_raw_conset_statuses() -> Dictionary:
 	return consentParser.getRawConsentStatusForAllPurposes()
@@ -102,12 +108,12 @@ func get_raw_conset_statuses() -> Dictionary:
 # Status of a specific purpose can be obtained by the Array index, which should correspond to the 
 # Purpose's id, represented by their number (1-10)
 # The index for the Google Advertising Products vendor is "0"
-# Array on each index will be an bool Array, where [0] is for consent and [1] is for legitimate interest
+# Array on each index will be an bool Array, where  index [0] is for consent and index [1] is for legitimate interest
 # For example:
 #
 # [true,true]   - means that both consent and legitimate interest were GRANTED for the corresponding  purpose
 # [false,true]  - means that consent was DENIED but legitimate interest was GRANTED for the corresponding  purpose
-# [true,false]  - means that both consent was GRANTED and legitimate interest was DENIED for the corresponding  purpose
+# [true,false]  - means that consent was GRANTED and legitimate interest was DENIED for the corresponding  purpose
 # [false,false] - means that both consent and legitimate interest were DENIED for the corresponding  purpose
 #
 # So, for example:
@@ -129,17 +135,17 @@ func get_conset_statuses() -> Array:
 
 
 # Gets the statuses for a single Purposes in its raw Dictionary format
-# purpose_id should be the  Purpose id represented by its number (1-10)
+# purpose_id should be the Purpose id represented by its number (1-10)
 # To get consent status for Google Advertising Products vendor, purpose_id should be 0
 #
 # The returned Dictionary has one entry, where the key is the Purpose id, or 
 # "GV" for Google Advertising Products vendor 
 #
-# The value for the single key will be an int Array, where [0] is for consent and [1] is for legitimate interest
+# The value for the single key will be an int Array, where index [0] is for consent and index [1] is for legitimate interest
 # For example:
 # {"2": [1,1]} - means that for Purpose 2, both consent and legitimate interest were GRANTED
 # {"2": [0,1]} - means that for Purpose 2, consent was DENIED but legitimate interest was GRANTED
-# {"2": [1,0]} - means that for Purpose 2, both consent was GRANTED and legitimate interest was DENIED
+# {"2": [1,0]} - means that for Purpose 2, consent was GRANTED and legitimate interest was DENIED
 # {"2": [0,0]} - means that for Purpose 2, both consent and legitimate interest were DENIED
 func get_raw_consent_status_by_id(purpose_id) -> Dictionary:
 	if purpose_id > 10:
@@ -148,7 +154,7 @@ func get_raw_consent_status_by_id(purpose_id) -> Dictionary:
 	return consentParser.getRawConsentStatusForSinglePurpose(purpose_id)
 
 
-# Returns the consent status of a single purpose as a bool Array where [0] is for consent and [1] is for legitimate interest
+# Returns the consent status of a single purpose as a bool Array where index [0] is for consent and index [1] is for legitimate interest
 #
 # purpose_id should be the  Purpose id represented by its number (1-10)
 # To get consent status for Google Advertising Products vendor, purpose_id should be 0
@@ -156,7 +162,7 @@ func get_raw_consent_status_by_id(purpose_id) -> Dictionary:
 # For example:
 # [true,true]   - means that both consent and legitimate interest were GRANTED for the corresponding  purpose
 # [false,true]  - means that consent was DENIED but legitimate interest was GRANTED for the corresponding  purpose
-# [true,false]  - means that both consent was GRANTED and legitimate interest was DENIED for the corresponding  purpose
+# [true,false]  - means that consent was GRANTED and legitimate interest was DENIED for the corresponding  purpose
 # [false,false] - means that both consent and legitimate interest were DENIED for the corresponding  purpose
 func get_consent_status_by_id(purpose_id) -> Array:
 	var key:String
@@ -174,6 +180,7 @@ func get_consent_status_by_id(purpose_id) -> Array:
 	var legitimate_interest_status = bool(raw_consent_data[str(key)][1])
 	
 	return [consent_status, legitimate_interest_status]
+
 
 # Gets the currently defined purpose names from the singleton, as defined by law at
 # the time of release (in English only)
@@ -205,7 +212,8 @@ func get_all_consent_issues_as_text() -> Array:
 	
 	return issues_texts
 
-# Same as above, only without personalised consent details. Shows the issues preventing
+
+# Same as above, only without personalised consent details, only for the issues preventing
 # you fromn showing ANY ads
 func get_limited_consent_issues_as_text() -> Array:
 	var issues_texts:Array = []
@@ -226,7 +234,8 @@ func get_limited_consent_issues_as_text() -> Array:
 	
 	return issues_texts
 	
-# Same as above, only without basic consent details. Shows the issues preventing
+
+# Same as above, only without basic consent details, only the issues preventing
 # you fromn showing PERSONALISED ads
 func get_personalised_consent_issues_as_text() -> Array:
 	var issues_texts:Array = []
