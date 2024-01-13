@@ -25,8 +25,12 @@ func is_consent_needed() -> bool:
 # [true, true] - means personalised ads can be served
 # [true, false] - means only non-personaised ads can be served
 # [false, false] - means no ads will be served
+# If no consent is necessary, it always returns [true, true]
 func is_consent_sufficient() -> Array:
-	return [consentParser.canShowAds(), consentParser.canShowPersonalizedAds()]
+	if is_consent_needed():
+		return [consentParser.canShowAds(), consentParser.canShowPersonalizedAds()]
+	else:
+		return [true, true]
 
 # Checks for any issues with consent, and stores them in the appropriate variables
 # the variables can be accessed raw, or you can use one of the methods below.
