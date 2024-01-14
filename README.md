@@ -73,6 +73,7 @@ if Engine.has_singleton("EUConsentStringParser"):
 
 ##  Public methods exposed to Godot
 
+- `consentParser.consentStringExists()`: True, if consent check succeeded at least once. Useful when consent check fails for any reason.
 - `consentParser.consentIsNeeded()`: Returns `true` for users for whom GDPR applies (i.e. inside the EEA), and `false` in every other case
 - `consentParser.canShowAds()` : returns `true` if you can show at least non-personalised ads, or `false` if you can't show any ads.
 - `consentParser.canShowPersonalizedAds()`: returns `true` if you can show personalised ads, or `false` if you can't show personalised ads.
@@ -99,18 +100,32 @@ If this looks complicated, you can thank Google, the EU, and my own inability to
 ## Usage (detailed)
 
 ### Godot wrapper script
-If you don't want to use the singleton directly, have a look at the Godot wrapper script in the `/gdscript` folder, which makes things more Godot-friendly and, occasionally, user friendly. The Godot code is (badly) annotated and (kind of ) self explanatory. You will find a separate README file there, with more detailed instructios for the script. (Still, it might not hurt to read the more details stuff below, too).
+If you don't want to use the singleton directly, have a look at the Godot wrapper script in the `/gdscript` folder, which makes things more Godot-friendly and, occasionally, user friendly. The Godot code is (badly) annotated and (kind of ) self explanatory. You will find a  [separate readme file there](gdscript/HOW_TO_USE.md), with more detailed instructions for the script. (Still, it might not hurt to read the more details stuff below, too).
 
 You can use the script as is, even AutoLoad it, or modify it, copy/paste parts of it, use it as an example, inspiration, or even toilet paper if you print it out.
+
+Note: **I recommend using the wrapper script, it will make things a *lot* easier**. (Especially now that it's somewhat better documented.)
 
 If you want to use the singleton directly, or want to understand better what's happening in the plugin and where (any why), read on...
 
 ### Simple checks
 
+You will need to check for consent every time your app starts (this is because some consents can expire with time). How you do this depends on the way/method/plugin you use. In any case, if consent check fails for some reason, AdMob will use a pre-existing consent string stored on the device, and read the consent info from there.
+
+If the consent check fails, and you want to know whether the consent was obtained previously (for example to insist a little harder that you need this at least once), you can use the following method:
+
+```
+consentParser.consentStringExists() -> bool
+```
+
+It returns `true`, if consent check succeeded at least once, regardless of the consent status (see below for further checks). 
+
+**If the consent check succeeded, or you determined that you have previously obtained consent:**
+
 First of all, you might want to check if GDPR even applies to the user:
 
 ```
-consetnParser.consentIsNeeded() -> bool 
+consentParser.consentIsNeeded() -> bool 
 ```
 
 Returns `true` for users within the EEA (or the EU and GB, or however Google implemented it), to whom GDPR applies (i.e. inside the EEA), and `false` in every other case. The Google Mobile Ads SDK or UMP SDK would already tell you this when checking consent status, but it does not hurt being able to manually check from here as well. 
