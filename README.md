@@ -64,7 +64,7 @@ A lot has changed in Godot, including the plugin system, and with v2 (of the plu
 
 Once installed, you should be able to obtain the singleton called `EUConsentStringParser` in any script, like this:
 
-```
+```gdscript
 #You can name the variable whatever you like, but should you, really?
 if Engine.has_singleton("EUConsentStringParser"):
 	var consentParser = Engine.get_singleton("EUConsentStringParser")
@@ -114,7 +114,7 @@ You will need to check for consent every time your app starts (this is because s
 
 If the consent check fails, and you want to know whether the consent was obtained previously (for example to insist a little harder that you need this at least once), you can use the following method:
 
-```
+```gdscript
 consentParser.consentStringExists() -> bool
 ```
 
@@ -124,7 +124,7 @@ It returns `true`, if consent check succeeded at least once, regardless of the c
 
 First of all, you might want to check if GDPR even applies to the user:
 
-```
+```gdscript
 consentParser.consentIsNeeded() -> bool 
 ```
 
@@ -134,7 +134,7 @@ Returns `true` for users within the EEA (or the EU and GB, or however Google imp
 
 If the above method returned `true`, you can call these two methods directly on the singleton, to know if ads are good to go:
 
-```
+```gdscript
 consentParser.canShowAds() -> bool
 ```
 
@@ -144,7 +144,7 @@ Will return a simple `true` or `false` answer, letting you know **if the user ha
 
 **IMPORTANT**: If this function returns `false`, AdMob will most likely ***not show any ads at all***. ("Limited ads" don't seem to work well in practice.)
 
-```
+```gdscript
 consentParser.canShowPersonalizedAds() -> bool
 ```  
 
@@ -163,7 +163,7 @@ If the result of either of the above is `false` (especially if you cannot show a
 
 The following method will help identifying which Purposes are missing consent and/or legitimate interest, where applicable:
 
-```
+```gdscript
 consentParser.getConsentStatusIssuesList() -> Dictionary
 ```
 
@@ -189,23 +189,23 @@ Examples:
 
 In the very likely case that the user pressed the "Manage choices" button, then accepted their choices without specifying anything, the Dictionary will look like this:
 
-```
+```gdscript
 {"ADS_STATUS": 0,
 "MISSING_MANDATORY_CONSENT": [1],
 "MISSING_PERSONALISED_CONSENT": [1, 3, 4],
-"MISSING_VENDOR_CONSENT": Google Advertising Products vendor consent and/or legitimate interest missing (both are needed).}
+"MISSING_VENDOR_CONSENT": "Google Advertising Products vendor consent and/or legitimate interest missing (both are needed)."}
 ```
 
 You will probably see this a lot. All flexible purposes (2,7,9,10) default to legitimate interest, but the user has to manually select at least Purpose 1 (Also for Purposes 3 and 4 for personalised ads), **and** provide explicit consent to the "Google Advertising Products" vendor, which is among the worst UX fails in history, but there's very little we can do about it until Google chooses to fix it.
 
 If, for argument's sake (and to illustrate the point), the user goes as far as explicitly denying both consent and legitimate interest for e.g. "Purpose 2 - Select basic ads" and "Purpose 7 - Measure ad performance" while leaving other options unchanged, the Dictionary will have an extra key:
 
-```
+```gdscript
 {"ADS_STATUS": 0,
 "MISSING_MANDATORY_CONSENT": [1],
 "MISSING_PERSONALISED_CONSENT": [1, 3, 4],
 "MISSING_CONSENT_OR_LEGIT_INTEREST": [2, 7],
-"MISSING_VENDOR_CONSENT": Google Advertising Products vendor consent and/or legitimate interest missing (both are needed).}
+"MISSING_VENDOR_CONSENT": "Google Advertising Products vendor consent and/or legitimate interest missing (both are needed)."}
 ```
 
 That about covers the worst case scenarios, i.e. no ads at all.
@@ -214,7 +214,7 @@ That about covers the worst case scenarios, i.e. no ads at all.
 
 If the user somehow managed to set consent non-personalised ads only (very unlikely under the current conditions with the official AdMob popup), the Dictionary will look like this:
 
-```
+```gdscript
 {"ADS_STATUS": 1,
 "MISSING_PERSONALISED_CONSENT": [3, 4]}
 ```
@@ -226,7 +226,7 @@ since the only real difference between personalised and non-personalised ad cons
 #### Read info for all consent purposes
 If are interested in knowing in greater detail what purpose has what kind of consent, including those that are not included in the above checks (Purposes 5, 6 and 8) the following method will return the user's choices in a human *and* machine readable format (although while machines would probably prefer this, humans might frown at it):
 
-```
+```gdscript
 consentParser.getRawConsentStatusForAllPurposes() -> Dictionary
 ```
 
@@ -236,7 +236,7 @@ For each key, the value will be an `int` `Array`, where the first value (0th ind
 
 For example, for "Purpose 2 - Select basic ads", you might see something like this, depending on the user's choice:
 
-```
+```gdscript
 # User granted both consent and legitimate interest:
 "2": [1, 1]
 
@@ -253,7 +253,7 @@ For example, for "Purpose 2 - Select basic ads", you might see something like th
 
 The full returned Dictionary will look something like this when the user clicks "Consent" or "Accept All":
 
-```
+```gdscript
 {"1": [1, 1],
 "2": [1, 1],
 "3": [1, 1],
@@ -269,7 +269,7 @@ The full returned Dictionary will look something like this when the user clicks 
 
 Or like this if the user has somehow managed to give the absolute minimal consent to show non-personalised ads:
 
-```
+```gdscript
 {"1": [1, 1],
 "2": [0, 1],
 "3": [0, 0],
@@ -294,13 +294,13 @@ If you are only interested in a specific purpose's consent status, you can use t
 
 (*The original reason for using a Dictionary was the limitation on the plugin system's return data types, but it turned out to also be more concise this way.*)
 
-```
+```gdscript
 consentParser.getRawConsentStatusForSinglePurpose(int purpose_number) -> Dictionary
 ```
 
 where `purpose_number` is the numerical part of the purpose name, so to check the status of e.g. "Purpose 2 - Select basic ads", you would call
 
-```
+```gdscript
 # get consent status for Purpose 2 - Select basic ads
 consentParser.getRawConsentStatusForSinglePurpose(2)
 
@@ -310,7 +310,7 @@ consentParser.getRawConsentStatusForSinglePurpose(2)
 
 or if you are interested in the "Google Advertising Products" vendor consent status, you should pass 0 as the argument:
 
-```
+```gdscript
 # get consent status for "Google Advertising Products" vendor 
 consentParser.getRawConsentStatusForSinglePurpose(0)
 
@@ -320,7 +320,7 @@ consentParser.getRawConsentStatusForSinglePurpose(0)
 
 If you pass a number larger than 10 as an argument, the Dictionary will return an Index Out of Bounds error as the key. 
 
-```
+```gdscript
 # get consent status for an invalud purpose number
 consentParser.getRawConsentStatusForSinglePurpose(11)
 
@@ -335,24 +335,24 @@ For sanity's sake, you should always check the returned dictionary for `IDX_OOB_
 
 There is one more method that will return a Dictionary with the currently (legally) defined Purpose names (only in English, sorry), and the Google vendor's name as defined in the list, matched to the keys other Dictionaries use :
 
-```
+```gdscript
 consentParser.getFullPurposeNamesByKey() -> Dictionary
 ```
 
 will give you:
 
-```
-{"1": Purpose 1 - Store and/or access information on a device
-"2": Purpose 2 - Select basic ads
-"3": Purpose 3 - Create a personalised ads profile
-"4": Purpose 4 - Select personalised ads
-"5": Purpose 5 - Create a personalised content profile
-"6": Purpose 6 - Select personalised content
-"7": Purpose 7 - Measure ad performance
-"8": Purpose 8 - Measure content performance
-"9": Purpose 9 - Apply market research to generate audience insights
-"10": Purpose 10 - Develop and improve products
-"GV": Google Advertising Products vendor consent anf legitimate interest}
+```gdscript
+{"1": "Purpose 1 - Store and/or access information on a device"
+"2": "Purpose 2 - Select basic ads"
+"3": "Purpose 3 - Create a personalised ads profile"
+"4": "Purpose 4 - Select personalised ads"
+"5": "Purpose 5 - Create a personalised content profile"
+"6": "Purpose 6 - Select personalised content"
+"7": "Purpose 7 - Measure ad performance"
+"8": "Purpose 8 - Measure content performance"
+"9": "Purpose 9 - Apply market research to generate audience insights"
+"10": "Purpose 10 - Develop and improve products"
+"GV": "Google Advertising Products vendor consent anf legitimate interest"}
 ```
 
 You can use this lists if you want to somehow include these in any form of communication, notice, FAQ, whatever you chose to gently remind your users that Google made both your and their lives exponentially harder when implementing the already overly-bloated EU law so badly.
