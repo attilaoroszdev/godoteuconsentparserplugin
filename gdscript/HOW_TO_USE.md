@@ -250,7 +250,7 @@ func _on_AdMob_consent_app_can_request_ad(consent_status):
        elif not GDPRTools.can_show_personalised_ads():
             # The user did not consent to personalised ads
             # In this case, we only need to know whether cnsent for Purpose 3, Purpose 4 or both
-            # is misisng. The returned int Array will contain the ID(s) of the mising purpose(s)
+            # is misisng. The returned int Array will contain any or all of the following: [3, 4]
             # (None of the other methods apply here, since we already checked those, but youmight need them if you do it a different way)
             missing_personalised_consents = GDPRTools.get_denied_personalised_consents()
 ```
@@ -269,11 +269,11 @@ var missing_vendor_consent:bool = false
 func _on_AdMob_consent_app_can_request_ad(consent_status):
     if GDPRTools.is_consent_needed():
        if not (GDPRTools.can_show_any_ads() or GDPRTools.can_show_personalised_ads()):
-           var missing_consents:Array = get_all_consent_issues() 
-           missing_consent_ids = missing_consents[0]
-           missing_personalised_consents = missing_consents[1]
-           missing_consent_or_legit_interest_ids = missing_consents[2]
-           missing_vendor_consent = missing_consents[3]
+           var missing_consents:Array = get_all_consent_issues()        # Might contain: [[1], [3,4], [2, 7, 9, 10], true]
+           missing_consent_ids = missing_consents[0]                    # Might contain: [1] 
+           missing_personalised_consents = missing_consents[1]          # Might contain: [3, 4]
+           missing_consent_or_legit_interest_ids = missing_consents[2]  # Might contain: [2, 7, 9, 10]
+           missing_vendor_consent = missing_consents[3]                 # Either true or false
            
 ```
 
