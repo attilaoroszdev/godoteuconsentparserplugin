@@ -3,11 +3,11 @@
 
 The wrapper script should be annotated enough, but if you're new to this, or already feel confused enough about the while AdMob/consent situation (it *is* super-confusing), the below little guide will provide at east a good starting point.
 
-The will be explained in context of using it with [Shin-Nil's AdMob plugin](htps://github.com/Shin-NiL/Godot-Android-Admob-Plugin), but it should be easy enough to apply any of this to any other method or plugin of pbtaining consent (as they should have the same or similar workflows).
+The will be explained in context of using it with [Shin-Nil's AdMob plugin](htps://github.com/Shin-NiL/Godot-Android-Admob-Plugin), but it should be easy enough to apply to any other method or plugin of obtaining consent (as they should have the same or similar workflows).
 
 ## Prerequisites
 
-This is not meant to be a complete "how to use admob" guide, focusing only the consent side of thigns, and especially on how this plugin can be used to make sense of it. There will be a number of pre-requisites, that I cannot currently help you with. (I might publish something more exhaustive in the future on some platform or another, but it's best to keep things on point here.)
+This is not meant to be a complete "how to use AdMob" guide, but focusing only the consent side of thigns, and especially on how this plugin can be used to make sense of it. There will be a number of pre-requisites, that I cannot currently help you with. (I might publish something more exhaustive in the future on some platform or another, but it's best to keep things on point here.)
 
 - You have configured your AdMob account and set up the GDPR consent message correctly
 - You have Shin-Nil's AdMob plugin installed and configured
@@ -17,7 +17,7 @@ This is not meant to be a complete "how to use admob" guide, focusing only the c
 If all these are good, you can start using the wrapper script, and finally make sense of your users' GDPR choices… kind of.
 
 
-**DISCLAIMER: NON OF THIS IS LEGAL ADVICE, AND SHOULD NOT BE TAKEN AS SUCH. I AM AS CLUELESS ABOUT THE WHOLE GDPR THING'S TRUE LEGAL CONSEQUENCES AS THE NEXT PUNTER. ALL OF THIS TEXT IS MERELY A *TECHNICAL MANUAL* FOR THIS WHO WABT TO KNOW HOW TO IMPLEMENT STUFF**
+**DISCLAIMER: NON OF THIS IS LEGAL ADVICE, AND SHOULD NOT BE TAKEN AS SUCH. I AM AS CLUELESS ABOUT THE WHOLE GDPR THING'S TRUE LEGAL CONSEQUENCES AS THE NEXT PUNTER. ALL OF THIS TEXT IS MERELY A *TECHNICAL MANUAL* FOR THOSE WHO WANT TO KNOW HOW TO IMPLEMENT STUFF**
 
 ## Usage
 
@@ -45,7 +45,7 @@ func _on_AdMob_consent_info_update_failure(error_code, error_message):
     
 func _on_AdMob_consent_app_can_request_ad(consent_status):
     # This is called when AdMob verified the consent status, either by dospélaying the consent popup and
-    # obtaining consent, verifying stuff online, or reading the consentz string from the user's device.
+    # obtaining consent, verifying stuff online, or reading the consent string from the user's device.
     #
     # consent_status will be an int, where the two interesting values are:
     # consent_status == 1 # Means that no consent is necessary, the user is outside of the EU/EEA, everythign will work
@@ -69,7 +69,7 @@ $AdMob.request_consent_info_update()
 
 If you've set everything up right, this will present EU/EEA users with the consent popup you've set up in your AdMob account, or just silently return a status 1 for non EU/EEA users.
 
-**IMPORTANT:** As per Google's recommendation, you will need to actively check this every time the app starts, because some consents can and will expire with time
+**IMPORTANT:** As per Google's recommendation, you will need to actively check this every time the app starts, because some consents can and will expire with time.
 
 And that's all there is for obtaining consent from your users. But what can you do with it?
 
@@ -78,24 +78,26 @@ And that's all there is for obtaining consent from your users. But what can you 
 The  `GDPRTools.gd` script you have auto-loaded provides some easy-to-use methods to make sense of the consent message. 
 
 ***Yeah, but why do I need this?***
-You might not. Or you just want to be sure. Or maybe you rely on rewarded video ads for some game functionality (continue after a level fail, get some exrta items, whatever.) Honestly, it was the latter case that made me write this whole plugin, because I had no idea how to handle EU user mishaps.
 
-I have already outlined this in greater detail in the main README file, but here's a recap: It's very easy for the user to accidentally disable ads in the game. You would never know what happened to the ad revenue, and the players might get frustrated if things don1t work as expected.
+You might not. Or you just want to be sure. Or maybe you rely on rewarded video ads for some game functionality (continue after a level fail, get some extra items, whatever.) Honestly, it was the latter case that made me write this whole plugin, because I had no idea how to handle EU user mishaps.
 
-***And what can I do with the information thus obtained***
-Two things, mainly:
+I have already outlined this in greater detail in the main README file, but here's a recap: It's very easy for the user to accidentally disable ads in the game. You would never know what happened to the ad revenue, and the players might get frustrated if things don't work as expected.
+
+***And what can I do with the information thus obtained?***
+
+Two or three things, mainly:
 
 - Inform your users about how and how stuff might not work in the absence of consent, giving detailed information about the issue
 - Conditionally change your game logic /flow in the absence of consent, providing the user with alternatives or
-- Collect statistical data about consent. ==***CAREFUL***== now, this is treacherous ground. Whether you ***can*** collect any data is a very complex question. You are on you own with this one
+- Collect statistical data about consent. ***CAREFUL*** now, this is treacherous ground. Whether you ***can*** collect any data is a very complex question. You are on you own with this one.
 
 Now that we got the obvious out of the way, let's start for real…
 
 #### In case the consent check fails
 
-If, for any reason, the AdMob plugin could not check the consent status online, it will fall back on any previously obtained consent, which is stored on the user's device, and use that. You might be interested to know this, so you can apply some gentle pressure (e.g. display some message about it) to your user.
+If, for any reason, the AdMob plugin could not check the consent status online, it will fall back on any previously obtained consent, which is stored on the user's device, and use that. You might be interested to know about this, so you can apply some gentle pressure (e.g. display some message about it) to your user.
 
-Probably the best place to do this is in then the method `_on_AdMob_consent_info_update_failure` with the `GDPRToolsprevious_consent_string_exists()` method
+Probably the best place to do this is in then the method `_on_AdMob_consent_info_update_failure` with the `GDPRTools.previous_consent_string_exists()` method
 
 
 ```gdscript
@@ -110,7 +112,7 @@ func _on_AdMob_consent_info_update_failure(error_code, error_message):
 - Check, if the user is in the EU/EEA, and tell them you need their consent
 - Adjust your logic/flow to not load any ads
 
-If you have access to the user's geo-location, this should be easy enough. If not, you can either request an approximate location and check (out of the scope of this writing), or, as a *very coarse checkup*, you can just check if the device's locale is in one of the affected countries. In the latter case, there are a number of issues (user's phone is set to the wrong country), they are abroad, etc, but it1s still better than nothing, if you don1t want to requets lcoation access for some reason:
+If you have access to the user's geo-location, this should be easy enough. If not, you can either request an approximate location and check (out of the scope of this writing) or, as a *very coarse checkup*, you can just check if the device's locale is set to one of the affected countries. In the latter case, there are a number of issues (user's phone is set to the wrong country), they are abroad, etc, but it's still better than nothing if you don't want to requets lcoation access for some reason:
 
 
 ```gdscript
@@ -127,11 +129,11 @@ func _on_AdMob_consent_info_update_failure(error_code, error_message):
 ```
 
 
-(This is not currently part of the script, because it's really a very rough workaround)
+(This is not currently part of the script, because it's really a very rough workaround.)
 
 #### In case the consent was obtained, check if it was sufficient
 
-If you do have consent, you can use the following methods, to check if you1re good to go for showing ads at all. You might or might not want to put these into `_on_AdMob_consent_app_can_request_ad`, but I'll be putting them there for simplicity's sake, since ti1s the first place most of it starts to make sense.
+If you do have consent, you can use the following methods, to check if you're good to go for showing ads at all. You might or might not want to put these into `_on_AdMob_consent_app_can_request_ad`, but I'll be putting them there for simplicity's sake, since it's the first place most of it starts to make sense.
 
 
 ```gdscript
@@ -200,22 +202,23 @@ To be able to show personalised ads, in addition to the above:
 
 And this is only passingly mentioned in the above linked article (and not mentioned elsewhere at all.)
 
-**Under *"Vendor preferences"*, the vendor named *"Google Advertising Products"* has to be given explicit consent for all this to work**, which is not  problem if the user consented to everything, but might prevent them to choose non-personalised ads only. (The way this is implemented looks almost like a deliberate attempt to prevent the user from doing just that...)
+**Under *"Vendor preferences"*, the vendor named *"Google Advertising Products"* has to be given explicit consent for all this to work**, which is not a problem if the user consented to everything, but might prevent them to choose non-personalised ads only. (The way this is implemented looks almost like a deliberate attempt to prevent the user from doing just that...)
 
-In the examples below, the purpose ID will be used a lot. by this I mean the number of the purpose, for example for Purpose 1, the ID will 1, for Purpose 2, the ID will be 2, etc.
+In the examples below, the purpose ID will be used a lot. By this I mean the number of the purpose, for example for Purpose 1, the ID will 1, for Purpose 2, the ID will be 2, etc.
 
 Like so:
 
 
 ```gdscript
-# ID for purpose Store and/or access information on a device (Purpose 1)
+# ID for "Purpose 1 - Store and/or access information on a device"
 const id:int = 1
 ```
 
 
-None of this is part of the script, there are ni constants or enums for this, simply because it's very easy to relate e.g. Purpose 1 with the integer 1. :)
+None of this is part of the script, there are no constants or enums for this, simply because it's very easy to relate e.g. Purpose 1 with the integer 1. :)
 
 ***OK, but what*** **can** ***I do? how will I even know?***
+
 Glad, you asked. This is the main purpose of this plugin, call it Purpose 0 if you will (OK, that was the worst dad-joke every and I will stop).
 
 ##### Get the missing consent IDs (categorised) to process in any way you like in your code
@@ -278,12 +281,12 @@ func _on_AdMob_consent_app_can_request_ad(consent_status):
 ```
 
 
-So now we have the IDs of any and all missing purposes. What do we do with them? Like, literally, whatever the law allows you. get the logs (if you legally can), or display some user messages, etc. You can manually parse all of these, if you want or just use one of the helper methods that'll do this for you:
+So now we have the IDs of any and all missing purposes. What do we do with them? Like, literally, whatever the law allows you. Get the logs (if you legally can), or display some user messages, etc. You can manually parse all of these, if you want or just use one of the helper methods that'll do this for you:
 
 
 ##### Easily build human-readable messages for your users
 
-If you want to easily construct informative messages for your users, telling them what exactly went wrong, the following methods have your back. If that's all you want to do, this is all you need. All the above methods were focused on returning consent data in a machine readable way, bit these ones are for human eyes mostly:
+If you want to easily construct informative messages for your users, telling them what exactly went wrong, the following methods have your back. If that's all you want to do, this is all you need. All the above methods were focused on returning consent data in a machine readable way, but these ones are for human eyes mostly:
 
 
 ```gdscript
