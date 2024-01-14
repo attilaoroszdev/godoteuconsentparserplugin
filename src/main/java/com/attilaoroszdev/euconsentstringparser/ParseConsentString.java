@@ -376,15 +376,15 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
         org.godotengine.godot.Dictionary dict = new org.godotengine.godot.Dictionary();
         dict.put("1", "Purpose 1 - Store and/or access information on a device");
         dict.put("2", "Purpose 2 - Select basic ads");
-        dict.put("3", "Purpose 3 - Create a personalised ads profile");
-        dict.put("4", "Purpose 4 - Select personalised ads");
-        dict.put("5", "Purpose 5 - Create a personalised content profile");
-        dict.put("6", "Purpose 6 - Select personalised content");
+        dict.put("3", "Purpose 3 - Create a personalized ads profile");
+        dict.put("4", "Purpose 4 - Select personalized ads");
+        dict.put("5", "Purpose 5 - Create a personalized content profile");
+        dict.put("6", "Purpose 6 - Select personalized content");
         dict.put("7", "Purpose 7 - Measure ad performance");
         dict.put("8", "Purpose 8 - Measure content performance");
         dict.put("9", "Purpose 9 - Apply market research to generate audience insights");
         dict.put("10", "Purpose 10 - Develop and improve products");
-        dict.put("GV", "Google Advertising Products vendor consent anf legitimate interest");
+        dict.put("GV", "Google Advertising Products vendor consent and legitimate interest");
         return dict;
     }
 
