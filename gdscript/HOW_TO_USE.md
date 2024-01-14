@@ -17,7 +17,7 @@ This is not meant to be a complete "how to use admob" guide, focusing only the c
 If all these are good, you can start using the wrapper script, and finally make sense of your users' GDPR choices… kind of.
 
 
-**==DISCLAIMER: NON OF THIS IS LEGAL ADVICE, AND SHOULD NOT BE TAKEN AS SUCH. I AM AS CLUELESS ABOUT THE WHOLE GDPR THING'S TRUE LEGAL CONSEQUENCES AS THE NEXT PUNTER. ALL OF THIS TEXT IS MERELY A *TECHNICAL MANUAL* FOR THIS WHO WABT TO KNOW HOW TO IMPLEMENT STUFF==**
+**DISCLAIMER: NON OF THIS IS LEGAL ADVICE, AND SHOULD NOT BE TAKEN AS SUCH. I AM AS CLUELESS ABOUT THE WHOLE GDPR THING'S TRUE LEGAL CONSEQUENCES AS THE NEXT PUNTER. ALL OF THIS TEXT IS MERELY A *TECHNICAL MANUAL* FOR THIS WHO WABT TO KNOW HOW TO IMPLEMENT STUFF**
 
 ## Usage
 
@@ -25,7 +25,8 @@ If all these are good, you can start using the wrapper script, and finally make 
 
 First, you need to connect the following two signals from the AdMob plugin (you can of course use the editor to do this, it's easier, but here's the code for completeness' sake):
 
-```
+
+```gdscript
 func _ready():
     $AdMob.connect("consent_info_update_failure", self, "_on_AdMob_consent_info_update_failure")
     $AdMob.connect("consent_app_can_request_ad", self, "_on_AdMob_consent_app_can_request_ad")
@@ -56,12 +57,15 @@ func _on_AdMob_consent_app_can_request_ad(consent_status):
     pass
 ```
 
+
 Once you've set that up, you can (and must) check for consent. Put the below code wherever you want the consent popup to appear in your app:
 
-```
+
+```gdscript
 # Verify consent status, and display consent popup if necessary
 $AdMob.request_consent_info_update()
 ```
+
 
 If you've set everything up right, this will present EU/EEA users with the consent popup you've set up in your AdMob account, or just silently return a status 1 for non EU/EEA users.
 
@@ -93,11 +97,13 @@ If, for any reason, the AdMob plugin could not check the consent status online, 
 
 Probably the best place to do this is in then the method `_on_AdMob_consent_info_update_failure` with the `GDPRToolsprevious_consent_string_exists()` method
 
-```
+
+```gdscript
 func _on_AdMob_consent_info_update_failure(error_code, error_message):
     if not GDPRTools.previous_consent_string_exists():
         # Do something about it
 ```
+
 
 ***OK, but what*** **can** ***I do about it?***
 
@@ -106,7 +112,8 @@ func _on_AdMob_consent_info_update_failure(error_code, error_message):
 
 If you have access to the user's geo-location, this should be easy enough. If not, you can either request an approximate location and check (out of the scope of this writing), or, as a *very coarse checkup*, you can just check if the device's locale is in one of the affected countries. In the latter case, there are a number of issues (user's phone is set to the wrong country), they are abroad, etc, but it1s still better than nothing, if you don1t want to requets lcoation access for some reason:
 
-```
+
+```gdscript
 const GDPR_COUNTRY_CODES:Array = ["AT", "BE", "BG", "CY",  "CH", "CZ", "DE", "DK", "EE", "ES", "FI", "FR", 
  "GB", "GR", "HR", "HU", "IE","IS", "IT","LI", "LT", "LU", "LV", "MT", "NL","NO", 
  "PL", "PT", "RO", "SE", "SI", "SK"]
@@ -115,9 +122,10 @@ func _on_AdMob_consent_info_update_failure(error_code, error_message):
     if not GDPRTools.previous_consent_string_exists():        
         var raw_locale = OS.get_locale()
         var country_code:String = raw_locale.substr(raw_locale.find("_")+1,2)
-		if country_code in GDPR_COUNTRY_CODES:
-            # Do somethign about it
+	if country_code in GDPR_COUNTRY_CODES:
+		# Do somethign about it
 ```
+
 
 (This is not currently part of the script, because it's really a very rough workaround)
 
@@ -125,7 +133,8 @@ func _on_AdMob_consent_info_update_failure(error_code, error_message):
 
 If you do have consent, you can use the following methods, to check if you1re good to go for showing ads at all. You might or might not want to put these into `_on_AdMob_consent_app_can_request_ad`, but I'll be putting them there for simplicity's sake, since ti1s the first place most of it starts to make sense.
 
-```
+
+```gdscript
 func _on_AdMob_consent_app_can_request_ad(consent_status):
     # Check if consent is even necessary
     if GDPRTools.is_consent_needed():
@@ -142,9 +151,11 @@ func _on_AdMob_consent_app_can_request_ad(consent_status):
         # User is outside of EU/EEA, consent requirements do not apply
 ```
 
+
 Alternatively if you want to check for both with a single method, you can use:
 
-```
+
+```gdscript
 func _on_AdMob_consent_app_can_request_ad(consent_status):
     # Check if consent is even necessary
     if GDPRTools.is_consent_needed():        
@@ -159,6 +170,7 @@ func _on_AdMob_consent_app_can_request_ad(consent_status):
     else:
         # User is outside of EU/EEA, consent requirements do not apply
 ```
+
 
 If you've got the green light here, or the user doesn't need to give consent, you can start loading ads as you normally would.
 
@@ -194,10 +206,12 @@ In the examples below, the purpose ID will be used a lot. by this I mean the num
 
 Like so:
 
-```
+
+```gdscript
 # ID for purpose Store and/or access information on a device (Purpose 1)
 const id:int = 1
 ```
+
 
 None of this is part of the script, there are ni constants or enums for this, simply because it's very easy to relate e.g. Purpose 1 with the integer 1. :)
 
@@ -208,7 +222,8 @@ Glad, you asked. This is the main purpose of this plugin, call it Purpose 0 if y
 
 To extend the above examples, we will add some more methods you can use to read the consents (unnecessary checks are now expluded for brevity)
 
-```
+
+```gdscript
 var missing_consent_ids:Array = []
 var missing_consent_or_legit_interest_ids:Array = []
 var missing_vendor_consent:bool = false
@@ -240,9 +255,11 @@ func _on_AdMob_consent_app_can_request_ad(consent_status):
             missing_personalised_consents = GDPRTools.get_denied_personalised_consents()
 ```
 
+
 Alternatively, you can obtain all of the above with a single method call:
 
-```
+
+```gdscript
 var missing_consent_ids:Array = []
 var missing_personalised_consents:Array = []
 var missing_consent_or_legit_interest_ids:Array = []
@@ -260,6 +277,7 @@ func _on_AdMob_consent_app_can_request_ad(consent_status):
            
 ```
 
+
 So now we have the IDs of any and all missing purposes. What do we do with them? Like, literally, whatever the law allows you. get the logs (if you legally can), or display some user messages, etc. You can manually parse all of these, if you want or just use one of the helper methods that'll do this for you:
 
 
@@ -267,7 +285,8 @@ So now we have the IDs of any and all missing purposes. What do we do with them?
 
 If you want to easily construct informative messages for your users, telling them what exactly went wrong, the following methods have your back. If that's all you want to do, this is all you need. All the above methods were focused on returning consent data in a machine readable way, bit these ones are for human eyes mostly:
 
-```
+
+```gdscript
 const user_message String = "Sorry mate, I cannot show you any ads, and stuff like rewards might not work. Here's why:\n%s"
 
 func _on_AdMob_consent_app_can_request_ad(consent_status):
@@ -304,22 +323,25 @@ func show_dialogue(message_text:String):
     ...
 ```
 
+
 There are other methods to tailor these messages, such as:
 
-```
+
+```gdscript
 # If you don't care about why personalised ads are not showing, 
 # but you want to inform your user why NO ADS are showing
 GDPRTools.get_limited_consent_issues_as_text() 
 
 # If you don't care about why personalised ads are not showing, 
 # but you wan to inform your user why NO ADS are showing,
-# and you want it formatted with bb_code
+# and you want it formatted as bb_code
 GDPRTools.get_limited_consent_issues_as_bbcode_text()
 
 # If you ONLY care about why personalised ads are not showing, 
 # and you want to inform your user why
 GDPRTools.get_personalised_consent_issues_as_text()
 ```
+
 
 these methods will return similar String Arrays you can directly use.
 
