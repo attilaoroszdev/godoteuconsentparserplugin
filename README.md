@@ -344,15 +344,15 @@ will give you:
 ```gdscript
 {"1": "Purpose 1 - Store and/or access information on a device"
 "2": "Purpose 2 - Select basic ads"
-"3": "Purpose 3 - Create a personalised ads profile"
-"4": "Purpose 4 - Select personalised ads"
-"5": "Purpose 5 - Create a personalised content profile"
-"6": "Purpose 6 - Select personalised content"
+"3": "Purpose 3 - Create a personalized ads profile"
+"4": "Purpose 4 - Select personalized ads"
+"5": "Purpose 5 - Create a personalized content profile"
+"6": "Purpose 6 - Select personalized content"
 "7": "Purpose 7 - Measure ad performance"
 "8": "Purpose 8 - Measure content performance"
 "9": "Purpose 9 - Apply market research to generate audience insights"
 "10": "Purpose 10 - Develop and improve products"
-"GV": "Google Advertising Products vendor consent anf legitimate interest"}
+"GV": "Google Advertising Products vendor consent and legitimate interest"}
 ```
 
 You can use this lists if you want to somehow include these in any form of communication, notice, FAQ, whatever you chose to gently remind your users that Google made both your and their lives exponentially harder when implementing the already overly-bloated EU law so badly.
