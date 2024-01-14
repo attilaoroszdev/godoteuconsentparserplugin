@@ -13,11 +13,32 @@ func _ready():
 	else:
 		push_error("EUConsentStringParser singleton not found")
 
+
+# Checks if the user has provideed consent previously. Especially useful if
+# the consent check fails for soem reason,(dMob will use the existing consent string 
+# that case, and now you have a way to confirm if there is one
+func previous_consent_string_exists() -> bool:
+	return consentParser.consentStringExists()
+
+
 # To check if GDPR applies to the user at all
 func is_consent_needed() -> bool:
 	return consentParser.consentIsNeeded()
 
 
+# Use this to quickly check if the absolute minimum requirements for showing any ads (personalised 
+# or not) were given
+func can_show_any_ads() -> bool:
+	return consentParser.canShowAds()
+
+
+# Use this to quickly check if the absolute minimum requirements for showing 
+# personalised ads were given
+func can_show_personalised_ads() -> bool:
+	return consentParser.canShowPersonalizedAds()
+
+
+# Combines the above two checks into a single method
 # Returns a boolean array, where 
 # index [0] - is for basic (or any) ads
 # index [1] - is for personalised ads
@@ -31,6 +52,7 @@ func is_consent_sufficient() -> Array:
 		return [consentParser.canShowAds(), consentParser.canShowPersonalizedAds()]
 	else:
 		return [true, true]
+
 
 # Checks for any issues with consent, and stores them in the appropriate variables
 # the variables can be accessed raw, or you can use one of the methods below.
@@ -217,6 +239,27 @@ func get_all_consent_issues_as_text() -> Array:
 	return issues_texts
 
 
+# Same as above, only formatted with bbcode (to be used with RichTextLabel)
+func get_limited_consent_issues_as_bbcode_text() -> Array:
+	var issues_texts:Array = []
+	var purpose_names_dict:Dictionary = get_purpose_names()
+	
+	if denied_mandatory_consents.size() > 0:
+		for id in denied_mandatory_consents:
+			var consent_name = purpose_names_dict[str(id)] + ":\n[b]missing consent[/b]\n"
+			issues_texts.append(consent_name)
+		for id in denied_consent_or_legit_interests:
+			var consent_name = purpose_names_dict[str(id)] + " :\n[b]missing consent or legitimate interest[/b]\n"
+			issues_texts.append(consent_name)
+		if missing_vendor_consent:
+			if not get_consent_status_by_id(0)[0]:
+				issues_texts.append("Google Advertising Products:\n[b]missing vendor consent[/b]\n")
+			if not get_consent_status_by_id(0)[1]:
+				issues_texts.append("Google Advertising Products:\n[b]vendor missing legitmate interest[/b]\n")
+	
+	return issues_texts
+
+
 # Same as above, only without personalised consent details, only for the issues preventing
 # you fromn showing ANY ads
 func get_limited_consent_issues_as_text() -> Array:
@@ -237,10 +280,10 @@ func get_limited_consent_issues_as_text() -> Array:
 				issues_texts.append("Google Advertising Products: vendor missing legitmate interest")
 	
 	return issues_texts
-	
+
 
 # Same as above, only without basic consent details, only the issues preventing
-# you fromn showing PERSONALISED ads
+# you from showing PERSONALISED ads
 func get_personalised_consent_issues_as_text() -> Array:
 	var issues_texts:Array = []
 	var purpose_names_dict:Dictionary = get_purpose_names()

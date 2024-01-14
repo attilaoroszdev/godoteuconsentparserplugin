@@ -149,6 +149,18 @@ public class ParseConsentString extends org.godotengine.godot.plugin.GodotPlugin
      *************************************/
 
 
+
+    /**
+     * ToDo
+     * @return
+     */
+    @UsedByGodot
+    public boolean consentStringExists(){
+        String purposeConsent = prefs.getString("IABTCF_PurposeConsents", "");
+        return purposeConsent.length()  > 0;
+    }
+
+
     /**
      * ToDo
      * @return
