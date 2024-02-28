@@ -11,6 +11,7 @@ func _ready():
 	if Engine.has_singleton("EUConsentStringParser"):
 		consentParser = Engine.get_singleton("EUConsentStringParser")
 	else:
+		consentParser = null
 		push_error("EUConsentStringParser singleton not found")
 
 
@@ -220,7 +221,7 @@ func get_all_consent_issues_as_text() -> Array:
 	var issues_texts:Array = []
 	var purpose_names_dict:Dictionary = get_purpose_names()
 	
-	if denied_mandatory_consents.size() > 0:
+	if has_consent_issues():
 		for id in denied_mandatory_consents:
 			var consent_name = purpose_names_dict[str(id)] + ": missing consent"
 			issues_texts.append(consent_name)
@@ -240,46 +241,25 @@ func get_all_consent_issues_as_text() -> Array:
 
 
 # Same as above, only formatted with bbcode (to be used with RichTextLabel)
-func get_limited_consent_issues_as_bbcode_text() -> Array:
+func get_all_consent_issues_as_bbcode_text() -> Array:
 	var issues_texts:Array = []
 	var purpose_names_dict:Dictionary = get_purpose_names()
-	
-	if denied_mandatory_consents.size() > 0:
+
+	if has_consent_issues():
 		for id in denied_mandatory_consents:
 			var consent_name = purpose_names_dict[str(id)] + ":\n[b]missing consent[/b]\n"
 			issues_texts.append(consent_name)
 		for id in denied_consent_or_legit_interests:
-			var consent_name = purpose_names_dict[str(id)] + " :\n[b]missing consent or legitimate interest[/b]\n"
+			var consent_name = purpose_names_dict[str(id)] + ":\n[b]missing consent or legitimate interest[/b]\n"
 			issues_texts.append(consent_name)
 		if missing_vendor_consent:
 			if not get_consent_status_by_id(0)[0]:
 				issues_texts.append("Google Advertising Products:\n[b]missing vendor consent[/b]\n")
 			if not get_consent_status_by_id(0)[1]:
 				issues_texts.append("Google Advertising Products:\n[b]vendor missing legitmate interest[/b]\n")
-	
+
 	return issues_texts
 
-
-# Same as above, only without personalised consent details, only for the issues preventing
-# you fromn showing ANY ads
-func get_limited_consent_issues_as_text() -> Array:
-	var issues_texts:Array = []
-	var purpose_names_dict:Dictionary = get_purpose_names()
-	
-	if denied_mandatory_consents.size() > 0:
-		for id in denied_mandatory_consents:
-			var consent_name = purpose_names_dict[str(id)] + ": missing consent"
-			issues_texts.append(consent_name)
-		for id in denied_consent_or_legit_interests:
-			var consent_name = purpose_names_dict[str(id)] + ": missing consent or legitimate interest"
-			issues_texts.append(consent_name)
-		if missing_vendor_consent:
-			if not get_consent_status_by_id(0)[0]:
-				issues_texts.append("Google Advertising Products: missing vendor consent")
-			if not get_consent_status_by_id(0)[0]:
-				issues_texts.append("Google Advertising Products: vendor missing legitmate interest")
-	
-	return issues_texts
 
 
 # Same as above, only without basic consent details, only the issues preventing
@@ -288,7 +268,7 @@ func get_personalised_consent_issues_as_text() -> Array:
 	var issues_texts:Array = []
 	var purpose_names_dict:Dictionary = get_purpose_names()
 	
-	if denied_mandatory_consents.size() > 0:
+	if has_consent_issues() and not can_show_personalised_ads():
 		for id in denied_personalised_consents:
 			var consent_name = purpose_names_dict[str(id)] + ": missing consent for personalised ads"
 			issues_texts.append(consent_name)
