@@ -127,7 +127,7 @@ func is_missing_vendor_consent() -> bool:
 # {"2": [0,1]} - means that for Purpose 2, consent was DENIED but legitimate interest was GRANTED
 # {"2": [1,0]} - means that for Purpose 2, consent was GRANTED and legitimate interest was DENIED
 # {"2": [0,0]} - means that for Purpose 2, both consent and legitimate interest were DENIED
-func get_raw_conset_statuses() -> Dictionary:
+func get_raw_consent_statuses() -> Dictionary:
 	return consentParser.getRawConsentStatusForAllPurposes()
 
 
@@ -146,7 +146,7 @@ func get_raw_conset_statuses() -> Dictionary:
 # So, for example:
 # 	if translated_statuses[2] == [true, true]: 
 # 		print("Both consent and legitimate interest were GRANTED for Purpose 2")
-func get_conset_statuses() -> Array:
+func get_consent_statuses() -> Array:
 	var raw_statuses:Dictionary = consentParser.getRawConsentStatusForAllPurposes()
 	var translated_statuses:Array = []
 	translated_statuses.resize(11)
