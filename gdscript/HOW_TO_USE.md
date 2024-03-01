@@ -41,6 +41,10 @@ func _on_AdMob_consent_info_update_failure(error_code, error_message):
     #
     # error_code will be an int. 
     # error_message will be a human readable reason for the failure
+    #
+    # IMPORTANT: If this is the first time you have checked for consent with no previous consent string present and it fails, 
+    # an "empty" consent string will be saved, with all purposes explicitly denied. In this case, ou might want to reste the 
+    # consent before rechecking (Details below.)
     pass
     
 func _on_AdMob_consent_app_can_request_ad(consent_status):
@@ -97,13 +101,31 @@ Now that we got the obvious out of the way, let's start for real…
 
 If, for any reason, the AdMob plugin could not check the consent status online, it will fall back on any previously obtained consent, which is stored on the user's device, and use that. You might be interested to know about this, so you can apply some gentle pressure (e.g. display some message about it) to your user.
 
-Probably the best place to do this is in then the method `_on_AdMob_consent_info_update_failure` with the `GDPRTools.previous_consent_string_exists()` method
+Probably the best place to do this is in `_on_AdMob_consent_info_update_failure` ~~with the `GDPRTools.previous_consent_string_exists()` method~
 
+Unfortunately the **previously advised solution will not work.** For some reason, if the very first consent check fails, a consent string will still be saved, with all purposes denied, leading to **possible false negatives**.
+
+So, instead of relying on "built-in" methods, you will need to implement your own solution to keep track of whether the consent check has been successfully completed at least once, ***OR***, call `GDPRTools.previous_consent_string_exists()` **before** checking for consent, and set a flag.
+
+If the consent check would fail on the very first time, you should reset the consent string with the AdMob plugin's `reset_consent()` method.
 
 ```gdscript
+# To know if the consent check succeeded before
+var has_previous_consent:bool
+
+func check_gdpr_consent_status():
+    # need to know, if we've done this before
+    has_previous_consent = GDPRTools.previous_consent_string_exists()
+    # Verify consent status, and display consent popup if necessary
+    $AdMob.request_consent_info_update()
+
+
 func _on_AdMob_consent_info_update_failure(error_code, error_message):
-    if not GDPRTools.previous_consent_string_exists():
-        # Do something about it
+    if not has_previous_consent:
+        # Reset the "false" consent string, but nly if the consent check never succeeded before
+        $AdMob.reset_consent()
+        
+        # Then do whatever you want with the fact that the check has failed
 ```
 
 
@@ -116,12 +138,25 @@ If you have access to the user's geo-location, this should be easy enough. If no
 
 
 ```gdscript
+# EU GDPR country code list
 const GDPR_COUNTRY_CODES:Array = ["AT", "BE", "BG", "CY",  "CH", "CZ", "DE", "DK", "EE", "ES", "FI", "FR", 
  "GB", "GR", "HR", "HU", "IE","IS", "IT","LI", "LT", "LU", "LV", "MT", "NL","NO", 
  "PL", "PT", "RO", "SE", "SI", "SK"]
 
+
+# To know if the consent check succeeded before
+var has_previous_consent:bool
+
+
+func check_gdpr_consent_status():
+    # need to know, if we've done this before
+    has_previous_consent = GDPRTools.previous_consent_string_exists()
+    # Verify consent status, and display consent popup if necessary
+    $AdMob.request_consent_info_update()
+
+
 func _on_AdMob_consent_info_update_failure(error_code, error_message):
-    if not GDPRTools.previous_consent_string_exists():        
+    if not has_previous_consent:        
         var raw_locale = OS.get_locale()
         var country_code:String = raw_locale.substr(raw_locale.find("_")+1,2)
 	if country_code in GDPR_COUNTRY_CODES:
@@ -135,6 +170,7 @@ func _on_AdMob_consent_info_update_failure(error_code, error_message):
 
 If you do have consent, you can use the following methods, to check if you're good to go for showing ads at all. You might or might not want to put these into `_on_AdMob_consent_app_can_request_ad`, but I'll be putting them there for simplicity's sake, since it's the first place most of it starts to make sense.
 
+**IMPORTANT:** Once the `_on_AdMob_consent_app_can_request_ad` was called **at least once**, the save consent string will always be correct. In that case you should only reset the consent whenever the user explicitly selects that option from some sort of menu. (You are legally required to present the with the option to change their choices)
 
 ```gdscript
 func _on_AdMob_consent_app_can_request_ad(consent_status):

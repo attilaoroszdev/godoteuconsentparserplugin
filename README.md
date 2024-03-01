@@ -357,6 +357,17 @@ will give you:
 
 You can use this lists if you want to somehow include these in any form of communication, notice, FAQ, whatever you chose to gently remind your users that Google made both your and their lives exponentially harder when implementing the already overly-bloated EU law so badly.
 
+## Known issues
+
+### False negatives after failed initial consent check
+*(The following has only been tested and oveserved using the Shin-Nil AdMob plugin for Godot)*
+
+When using Shin-Nil's AdMob plugin, and the initial GDPR check returns the `_on_AdMob_consent_info_update_failure()` signal, a consent string will be saved, populated by denied statuses everywhere, as if the user had explicitly denied every single purpose.
+
+When calling the `request_consent_info_update()` method, the next time, this might lead to some consent purposes falsly being identified as "denied", even if the user lets the "Legitimate Interest" option checked.
+
+The **solution** is to call `reset_consent()` after consent check fails, but ***only if consent is requested for the very first time, and the consent check fails*** (for example user has no internet connection, etc.). Resetting the consent at any other time will have unexpected consequences, and complications. YOu are on your won, how you implement this, but something like permanently saving a `consent_has_been_checked_at_least_once`  boolean flag would work well on the very first successful consent request.
+
 
 ## Help wanted
 
