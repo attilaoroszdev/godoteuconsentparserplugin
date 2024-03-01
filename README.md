@@ -364,9 +364,9 @@ You can use this lists if you want to somehow include these in any form of commu
 
 When using Shin-Nil's AdMob plugin, and the initial GDPR check returns the `_on_AdMob_consent_info_update_failure()` signal, a consent string will be saved, populated by denied statuses everywhere, as if the user had explicitly denied every single purpose.
 
-When calling the `request_consent_info_update()` method, the next time, this might lead to some consent purposes falsly being identified as "denied", even if the user lets the "Legitimate Interest" option checked.
+When calling the `request_consent_info_update()` method, the next time, this might lead to some consent purposes falsely being identified as "denied", even if the user lets the "Legitimate Interest" option checked.
 
-The **solution** is to call `reset_consent()` after consent check fails, but ***only if consent is requested for the very first time, and the consent check fails*** (for example user has no internet connection, etc.). Resetting the consent at any other time will have unexpected consequences, and complications. YOu are on your won, how you implement this, but something like permanently saving a `consent_has_been_checked_at_least_once`  boolean flag would work well on the very first successful consent request.
+The **solution** is to call `reset_consent()` after consent check fails, but ***only if consent is requested for the very first time, and the consent check fails*** (for example user has no internet connection, etc.). Resetting the consent at any other time will have unexpected consequences, and complications. You are on your own, ho implement this is completely up to you, but something like permanently saving a `consent_has_been_checked_at_least_once`  boolean flag after the very first successful consent request, or setting it *before* the initial consent check with a call to `consentParser.consentStringExists()` would work equally well.
 
 
 ## Help wanted
