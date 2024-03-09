@@ -360,9 +360,9 @@ You can use this lists if you want to somehow include these in any form of commu
 ## Known issues
 
 ### False negatives after failed initial consent check
-*(The following has only been tested and oveserved using the Shin-Nil AdMob plugin for Godot)*
+*(The following has only been tested and oveserved using the Shin-Nil AdMob plugin for Godot. The false negatives do not happen under all circumstances, but the exact conditions that trigger it are yet to be confirmed.)*
 
-When using Shin-Nil's AdMob plugin, and the initial GDPR check returns the `_on_AdMob_consent_info_update_failure()` signal, a consent string will be saved, populated by denied statuses everywhere, as if the user had explicitly denied every single purpose.
+When using Shin-Nil's AdMob plugin, and the initial GDPR check returns the `_on_AdMob_consent_info_update_failure()` signal, a consent string might still be saved, populated by denied statuses everywhere, as if the user had explicitly denied every single purpose.
 
 When calling the `request_consent_info_update()` method, the next time, this might lead to some consent purposes falsely being identified as "denied", even if the user lets the "Legitimate Interest" option checked.
 
