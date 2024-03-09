@@ -103,7 +103,7 @@ If, for any reason, the AdMob plugin could not check the consent status online, 
 
 Probably the best place to do this is in `_on_AdMob_consent_info_update_failure` ~~with the `GDPRTools.previous_consent_string_exists()` method~
 
-Unfortunately the **previously advised solution will not work.** For some reason, if the very first consent check fails, a consent string will still be saved, with all purposes denied, leading to **possible false negatives**.
+Unfortunately the **previously advised solution will not work.** For some reason, if the very first consent check fails, a consent string might still be saved (could not yet confirm under what exact conditions), with all purposes denied, leading to **possible false negatives**.
 
 So, instead of relying on "built-in" methods, you will need to implement your own solution to keep track of whether the consent check has been successfully completed at least once, ***OR***, call `GDPRTools.previous_consent_string_exists()` **before** checking for consent, and set a flag.
 
